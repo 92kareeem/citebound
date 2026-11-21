@@ -1,0 +1,82 @@
+{
+  "arithmetic": {
+    "false_accept": 0,
+    "false_refuse": 2,
+    "pairs_ok": 0
+  },
+  "attribute": {
+    "false_accept": 3,
+    "false_refuse": 0,
+    "pairs_ok": 0
+  },
+  "comparison": {
+    "false_accept": 4,
+    "false_refuse": 0,
+    "pairs_ok": 0
+  },
+  "compound": {
+    "false_accept": 3,
+    "false_refuse": 0,
+    "pairs_ok": 0
+  },
+  "entity": {
+    "false_accept": 4,
+    "false_refuse": 0,
+    "pairs_ok": 0
+  },
+  "fabrication": {
+    "false_accept": 0,
+    "false_refuse": 0,
+    "pairs_ok": 3
+  },
+  "modality": {
+    "false_accept": 3,
+    "false_refuse": 0,
+    "pairs_ok": 0
+  },
+  "multilingual": {
+    "false_accept": 0,
+    "false_refuse": 2,
+    "pairs_ok": 3
+  },
+  "negation": {
+    "false_accept": 5,
+    "false_refuse": 0,
+    "pairs_ok": 0
+  },
+  "number-format": {
+    "false_accept": 0,
+    "false_refuse": 0,
+    "pairs_ok": 2
+  },
+  "paraphrase": {
+    "false_accept": 3,
+    "false_refuse": 1,
+    "pairs_ok": 0
+  },
+  "quantifier": {
+    "false_accept": 3,
+    "false_refuse": 0,
+    "pairs_ok": 0
+  },
+  "repair": {
+    "false_accept": 0,
+    "false_refuse": 0,
+    "pairs_ok": 2
+  },
+  "staleness": {
+    "false_accept": 3,
+    "false_refuse": 0,
+    "pairs_ok": 0
+  },
+  "time-order": {
+    "false_accept": 3,
+    "false_refuse": 0,
+    "pairs_ok": 0
+  },
+  "unit": {
+    "false_accept": 4,
+    "false_refuse": 0,
+    "pairs_ok": 0
+  }
+}

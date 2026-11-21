@@ -6,6 +6,19 @@ All notable changes to `sentinel-proof`. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `benchmark/`: a contrastive benchmark for citation-level grounding. 104 cases
+  in 52 minimal pairs across 16 failure classes, each pair one claim that must
+  be rejected and a near-identical one that must be kept. `run.py` scores the
+  gate and writes `report.md`; `--check` fails if any class regresses against
+  `baseline.json`, and CI runs it on every pull request. The case file is plain
+  JSONL so another verifier can be scored on identical inputs.
+- The package README now publishes the score rather than describing the
+  limitation in prose: 19% pair accuracy, 38 false accepts of 51, 5 false
+  refusals of 53. No behaviour changed in this entry; the numbers are the
+  baseline the next release is measured against.
+
 ## [0.1.2] - 2026-11-16
 
 ### Added

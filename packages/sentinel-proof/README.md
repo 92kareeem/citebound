@@ -248,6 +248,28 @@ for paraphrase, and run this on every answer as the deterministic floor.
 (`UNVERIFIABLE_ANSWER`, `INSUFFICIENT_EVIDENCE`). `v.safe_text()` returns
 refusal prose that never leaks the unverified draft.
 
+## How accurate is it
+
+Measured, and worse than you would hope. The repository carries a
+[contrastive benchmark](https://github.com/92kareeem/sentinel-rag/tree/main/packages/sentinel-proof/benchmark):
+104 cases in 52 pairs, where each pair is
+one claim that must be rejected and a near-identical one that must be kept.
+
+| Metric | 0.1.2 |
+|---|---|
+| Pair accuracy | 19% (10 of 52) |
+| False accepts, a wrong claim kept | 38 of 51 |
+| False refusals, a right claim dropped | 5 of 53 |
+
+It scores full marks on fabricated figures, citation repair and number
+formatting, and zero on anything that turns on one small word: "not", "may",
+"below", "after". Those are being fixed in 0.2.0, deterministically, and the
+baseline is enforced in CI so each fix is on the record.
+
+The set is adversarial by construction, so this is not a rate you should expect
+in production. Run it yourself with `python benchmark/run.py`, and score your
+own tool on the same cases: `cases.jsonl` is plain JSONL for exactly that.
+
 ## What it is not
 
 - Not an entailment model. "The policy allows returns for a month" against a

@@ -1,0 +1,116 @@
+# A contrastive benchmark for citation-level grounding
+
+104 cases, 52 contrastive pairs, 16 failure classes. Each pair is two claims
+over the same evidence that differ by as little as one word: one that a
+verifier must reject, and one that it must keep.
+
+```bash
+python benchmark/run.py                  # score and write report.md
+python benchmark/run.py --check          # fail if any class got worse
+python benchmark/run.py --update-baseline
+```
+
+No dependencies, no model, no network. It runs in under a second.
+
+## Why pairs
+
+A verifier that rejects every claim has a false-accept rate of zero and is
+useless. A verifier that accepts everything never refuses a good answer and is
+also useless. Either one looks excellent on a one-sided metric.
+
+So the headline number here is **pair accuracy**: the share of pairs where the
+verifier rejects the bad half *and* keeps the good half. You cannot buy it with
+caution, and you cannot buy it with permissiveness.
+
+## Where `sentinel-proof` stands today
+
+Measured on this set, not on a friendly one. The current report is in
+[`report.md`](report.md).
+
+| Metric | 0.1.2 |
+|---|---|
+| Pair accuracy | 19% (10 of 52) |
+| False accepts | 38 of 51 |
+| False refusals | 5 of 53 |
+
+That is a poor score and it is published on purpose. The gate compares bags of
+words and figures, so it cannot see the word that carries the meaning: "not",
+"may", "below", "after", or a name it has never read. Three classes it already
+handles (fabricated figures, citation repair, number formatting) score full
+marks; most of the rest do not. The numbers exist so that every change can be
+measured against them instead of argued about.
+
+**This set is adversarial by construction.** It is not an estimate of how often
+a real RAG answer is wrong, and a score here does not transfer to production
+rates. It measures whether a specific failure mode is detectable at all.
+
+## The case schema
+
+`cases.jsonl`, one JSON object per line, deliberately plain so that any tool in
+any language can be scored on the same inputs.
+
+| Field | Meaning |
+|---|---|
+| `id` | unique, stable; referenced by `pair` |
+| `class` | the failure class, for the per-class table |
+| `expect` | `reject` if the claim must not survive, `keep` if it must |
+| `pair` | the `id` of the other half of the minimal pair |
+| `passages` | the retrieved evidence, in the order the model saw it |
+| `answer` | one claim, with its citation |
+| `question` | optional; figures the user typed are not fabrications |
+| `citation_style` | optional, `numeric` (default) or `tag` |
+| `why` | one line on what the case is testing |
+
+Each `answer` holds exactly one claim, so scoring needs no judgement: the claim
+survived, or it did not.
+
+## The classes
+
+| Class | What it tests |
+|---|---|
+| `negation` | "not permitted" read as "permitted" |
+| `modality` | an obligation (`must`) weakened to a permission (`may`) |
+| `quantifier` | `all` narrowed to `some`, `always` to `sometimes` |
+| `comparison` | a threshold direction inverted, `above` to `below` |
+| `time-order` | `before` and `after` swapped |
+| `unit` | the right figure with the wrong unit, 3 days to 3 months |
+| `entity` | the right action credited to the wrong person or company |
+| `attribute` | a real figure attached to the wrong subject |
+| `compound` | a sentence where only half is supported |
+| `staleness` | a superseded version quoted as current |
+| `paraphrase` | faithful restatement kept, unfaithful one rejected |
+| `multilingual` | the same checks in Spanish, German, French, Hindi, Chinese |
+| `arithmetic` | a figure correctly derived from two cited figures |
+| `number-format` | `1,200` and `1200` are one figure; `5.4` is not `4.5` |
+| `fabrication` | a figure that appears in no passage |
+| `repair` | a wrong citation that another retrieved passage supports |
+
+## Scoring another tool
+
+Read `cases.jsonl`, run your verifier on each `answer` with its `passages`, and
+decide whether the claim survived. Then score pairs the way `run.py` does. The
+comparison is only fair if every tool sees the same passages in the same order
+and is asked the same question: does this one claim survive.
+
+For model-based detectors that return a score rather than a decision, pick the
+threshold on a held-out split and say which threshold you used.
+
+## Adding a case
+
+Add both halves of the pair, keep the difference between them as small as the
+failure allows, then run `--update-baseline` in the same commit as the change
+that justifies it. A new class needs at least two pairs.
+
+Good cases come from real failures. If a user reports an answer that should
+have been refused, reduce it to a minimal pair and add it here.
+
+## Related work
+
+These measure different things and are worth running alongside, not instead:
+[RAGTruth](https://arxiv.org/abs/2401.00396) and LLM-AggreFact score detection
+over naturally generated text; [PARCEL](https://arxiv.org/html/2610.10971v1)
+does adversarial claim-level work for legal citations;
+[Faithfulness-QA](https://arxiv.org/html/2604.25313v2) supplies entity
+substitution at scale. What none of them covers is a small, dependency-free,
+contrastive set aimed at citation-level verification across these classes,
+which is why this one exists.

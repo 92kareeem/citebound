@@ -35,6 +35,8 @@ jobs:
       - run: ruff check . && ruff format --check .
       - run: mypy src
       - run: pytest -q
+      - name: Grounding benchmark, no regression against the baseline
+        run: python benchmark/run.py --check
       - name: The package really has no dependencies
         run: |
           pip install pipdeptree
