@@ -135,10 +135,10 @@ def main() -> int:
 
         # The browser and pip agree, byte for byte, on the same input.
         try:
-            from sentinel_proof import passages_from_texts, verify
+            from citebound import passages_from_texts, verify
         except ImportError:
-            sys.path.insert(0, str(DIST.parent.parent / "packages" / "sentinel-proof" / "src"))
-            from sentinel_proof import passages_from_texts, verify
+            sys.path.insert(0, str(DIST.parent.parent / "packages" / "citebound" / "src"))
+            from citebound import passages_from_texts, verify
         page.select_option("#preset", "0")
         page.wait_for_function("() => window.__playground.lastVerdict() && window.__playground.lastVerdict().ok === true")
         browser_json = page.locator("#json").inner_text()

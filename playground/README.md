@@ -1,8 +1,8 @@
 # Browser playground
 
-The static site at <https://92kareeem.github.io/sentinel-rag/>. It runs the
-`sentinel-proof` wheel built from this checkout inside [Pyodide](https://pyodide.org),
-so the verdict in the browser is the verdict `pip install sentinel-proof` gives.
+The static site at <https://92kareeem.github.io/citebound/>. It runs the
+`citebound` wheel built from this checkout inside [Pyodide](https://pyodide.org),
+so the verdict in the browser is the verdict `pip install citebound` gives.
 Nothing a visitor types leaves their tab.
 
 ```bash

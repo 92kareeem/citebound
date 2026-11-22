@@ -158,7 +158,7 @@ def test_budget_refusal_is_not_reported_as_missing_evidence() -> None:
     assert refusal_node(expired)["refusal_reason"] == RefusalReason.BUDGET_EXHAUSTED
 
 
-def test_sentinel_answer_is_classified_as_insufficient_evidence() -> None:
+def test_citebound_answer_is_classified_as_insufficient_evidence() -> None:
     state = _state(answer="INSUFFICIENT_CONTEXT", status="refused")
     assert refusal_node(state)["refusal_reason"] == RefusalReason.INSUFFICIENT_EVIDENCE
 

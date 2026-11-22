@@ -25,7 +25,7 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(payload)
 
 
-def get_logger(name: str = "sentinel") -> logging.Logger:
+def get_logger(name: str = "citebound") -> logging.Logger:
     logger = logging.getLogger(name)
     if not logger.handlers:
         handler = logging.StreamHandler(sys.stdout)

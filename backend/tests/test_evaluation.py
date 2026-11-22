@@ -22,7 +22,7 @@ def test_build_eval_report_renders_summary_markdown() -> None:
 
     report = build_eval_report(rows, top_k=4)
 
-    assert "# Sentinel — Eval Report" in report
+    assert "# Citebound — Eval Report" in report
     assert "Mean faithfulness" in report
     assert "Unanswerable refusal-rate" in report
     assert "| 1 | factual | 0.91 | True | False | 0 | 120 |" in report

@@ -1,4 +1,4 @@
-# The benchmark stack: Sentinel's API plus a stand-in LLM, nothing else.
+# The benchmark stack: Citebound's API plus a stand-in LLM, nothing else.
 #
 #   docker compose -f benchmarks/compose.bench.yml up -d --build --wait
 #
@@ -7,10 +7,10 @@
 #
 # The API container is capped at BENCH_API_CPUS (default 2) so results are
 # comparable between machines and the load generator on the same host keeps
-# its own cores. The model is benchmarks/mock_llm.py: real Sentinel, fake
+# its own cores. The model is benchmarks/mock_llm.py: real Citebound, fake
 # network hop to a model (see that file for why).
 
-name: sentinel-bench
+name: citebound-bench
 
 services:
   api:

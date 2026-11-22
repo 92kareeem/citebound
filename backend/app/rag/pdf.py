@@ -336,7 +336,7 @@ def blocks_to_markdown(extracted: ExtractedDocument) -> str:
     return "\n\n".join(out)
 
 
-# Sentinel markers the chunker strips out after using them to assign page
+# Citebound markers the chunker strips out after using them to assign page
 # numbers. Chosen to be something no real document line would contain.
 PAGE_MARKER_PREFIX = "<<<SENTINEL_PAGE:"
 PAGE_MARKER_SUFFIX = ">>>"

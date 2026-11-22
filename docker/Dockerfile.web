@@ -1,4 +1,4 @@
-# Sentinel web UI: a static Vite build served by nginx.
+# Citebound web UI: a static Vite build served by nginx.
 #
 # VITE_* values are baked in at build time. The default key is the local
 # fixture "demo-local", which only exists when the API runs with

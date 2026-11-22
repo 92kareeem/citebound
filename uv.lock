@@ -9,9 +9,9 @@ resolution-markers = [
 
 [manifest]
 members = [
-    "sentinel",
-    "sentinel-proof",
-    "sentinel-proof-mcp",
+    "citebound",
+    "citebound-mcp",
+    "citebound-platform",
 ]
 
 [[package]]
@@ -236,6 +236,116 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/3d/c6/eee9dca4439b1061f76373f06ea855678cc4a64c1c3c90b50e479edbb8eb/charset_normalizer-3.4.9-cp314-cp314t-win_arm64.whl", hash = "sha256:19ac87f93086ce37b86e098888555c4b4bc48102279bae3350098c0ed664b501", size = 158037, upload-time = "2026-07-07T14:34:35.018Z" },
     { url = "https://files.pythonhosted.org/packages/98/2b/f97f1c193fb855c345d678f5077d6926034db0722df74c8f057020e05a25/charset_normalizer-3.4.9-py3-none-any.whl", hash = "sha256:68e5f26a1ad57ded6d1cfb85331d1c1a195314756471d97758c48498bb4dcdf5", size = 64538, upload-time = "2026-07-07T14:34:56.993Z" },
 ]
+
+[[package]]
+name = "citebound"
+version = "0.2.0"
+source = { editable = "packages/citebound" }
+
+[package.optional-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8" },
+]
+provides-extras = ["dev"]
+
+[[package]]
+name = "citebound-mcp"
+version = "0.2.0"
+source = { editable = "packages/citebound-mcp" }
+dependencies = [
+    { name = "citebound" },
+    { name = "mcp" },
+    { name = "typing-extensions" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "citebound", editable = "packages/citebound" },
+    { name = "mcp", specifier = ">=2.3,<3" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8" },
+    { name = "typing-extensions", specifier = ">=4.6" },
+]
+provides-extras = ["dev"]
+
+[[package]]
+name = "citebound-platform"
+version = "1.0.0"
+source = { editable = "." }
+dependencies = [
+    { name = "boto3" },
+    { name = "citebound" },
+    { name = "faiss-cpu" },
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "langgraph" },
+    { name = "langgraph-checkpoint" },
+    { name = "langgraph-sdk" },
+    { name = "mangum" },
+    { name = "numpy" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "pymupdf" },
+    { name = "python-multipart" },
+    { name = "rank-bm25" },
+    { name = "sentence-transformers" },
+    { name = "transformers" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "cryptography" },
+    { name = "moto", extra = ["dynamodb"] },
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "ruff" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "boto3", specifier = "~=1.35" },
+    { name = "citebound", editable = "packages/citebound" },
+    { name = "cryptography", marker = "extra == 'dev'", specifier = ">=50.0.0" },
+    { name = "faiss-cpu", specifier = "~=1.9" },
+    { name = "fastapi", specifier = "~=0.115" },
+    { name = "httpx", specifier = "~=0.27" },
+    { name = "langgraph", specifier = ">=1.2.14,<2" },
+    { name = "langgraph-checkpoint", specifier = ">=4.1.1" },
+    { name = "langgraph-sdk", specifier = ">=0.4.6" },
+    { name = "mangum", specifier = "~=0.19" },
+    { name = "moto", extras = ["dynamodb"], marker = "extra == 'dev'", specifier = "~=5.0" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = "~=1.13" },
+    { name = "numpy", specifier = "~=2.1" },
+    { name = "pydantic", specifier = "~=2.9" },
+    { name = "pydantic-settings", specifier = "~=2.6" },
+    { name = "pymupdf", specifier = "~=1.24" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.3,<10" },
+    { name = "python-multipart", specifier = "~=0.0.12" },
+    { name = "rank-bm25", specifier = "~=0.2.2" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = "~=0.8" },
+    { name = "sentence-transformers", specifier = ">=6.1,<7" },
+    { name = "transformers", specifier = ">=5.10.0" },
+    { name = "uvicorn", marker = "extra == 'dev'", specifier = "~=0.32" },
+]
+provides-extras = ["dev"]
 
 [[package]]
 name = "click"
@@ -2157,114 +2267,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/c4/a1/53ae87971817e2d83
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b5/6e/9115e19589c83172bd37ec793cfef7f7c719464053fa6a8882700c1f4488/sentence_transformers-6.1.0-py3-none-any.whl", hash = "sha256:eb8122f4d180f552eda26dc3d77e84e8c11dc2b1d456a406b9f24abb70ceeadd", size = 740560, upload-time = "2026-09-18T10:44:22.841Z" },
 ]
-
-[[package]]
-name = "sentinel"
-version = "1.0.0"
-source = { editable = "." }
-dependencies = [
-    { name = "boto3" },
-    { name = "faiss-cpu" },
-    { name = "fastapi" },
-    { name = "httpx" },
-    { name = "langgraph" },
-    { name = "langgraph-checkpoint" },
-    { name = "langgraph-sdk" },
-    { name = "mangum" },
-    { name = "numpy" },
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
-    { name = "pymupdf" },
-    { name = "python-multipart" },
-    { name = "rank-bm25" },
-    { name = "sentence-transformers" },
-    { name = "sentinel-proof" },
-    { name = "transformers" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "cryptography" },
-    { name = "moto", extra = ["dynamodb"] },
-    { name = "mypy" },
-    { name = "pytest" },
-    { name = "ruff" },
-    { name = "uvicorn" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "boto3", specifier = "~=1.35" },
-    { name = "cryptography", marker = "extra == 'dev'", specifier = ">=50.0.0" },
-    { name = "faiss-cpu", specifier = "~=1.9" },
-    { name = "fastapi", specifier = "~=0.115" },
-    { name = "httpx", specifier = "~=0.27" },
-    { name = "langgraph", specifier = ">=1.2.14,<2" },
-    { name = "langgraph-checkpoint", specifier = ">=4.1.1" },
-    { name = "langgraph-sdk", specifier = ">=0.4.6" },
-    { name = "mangum", specifier = "~=0.19" },
-    { name = "moto", extras = ["dynamodb"], marker = "extra == 'dev'", specifier = "~=5.0" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = "~=1.13" },
-    { name = "numpy", specifier = "~=2.1" },
-    { name = "pydantic", specifier = "~=2.9" },
-    { name = "pydantic-settings", specifier = "~=2.6" },
-    { name = "pymupdf", specifier = "~=1.24" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.3,<10" },
-    { name = "python-multipart", specifier = "~=0.0.12" },
-    { name = "rank-bm25", specifier = "~=0.2.2" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = "~=0.8" },
-    { name = "sentence-transformers", specifier = ">=6.1,<7" },
-    { name = "sentinel-proof", editable = "packages/sentinel-proof" },
-    { name = "transformers", specifier = ">=5.10.0" },
-    { name = "uvicorn", marker = "extra == 'dev'", specifier = "~=0.32" },
-]
-provides-extras = ["dev"]
-
-[[package]]
-name = "sentinel-proof"
-version = "0.1.2"
-source = { editable = "packages/sentinel-proof" }
-
-[package.optional-dependencies]
-dev = [
-    { name = "mypy" },
-    { name = "pytest" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8" },
-]
-provides-extras = ["dev"]
-
-[[package]]
-name = "sentinel-proof-mcp"
-version = "0.1.0"
-source = { editable = "packages/sentinel-proof-mcp" }
-dependencies = [
-    { name = "mcp" },
-    { name = "sentinel-proof" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "mypy" },
-    { name = "pytest" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "mcp", specifier = ">=2.3,<3" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8" },
-    { name = "sentinel-proof", editable = "packages/sentinel-proof" },
-]
-provides-extras = ["dev"]
 
 [[package]]
 name = "setuptools"

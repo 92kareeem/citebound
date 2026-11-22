@@ -1,5 +1,5 @@
 {
-  "TableName": "sentinel-traces",
+  "TableName": "citebound-traces",
   "BillingMode": "PAY_PER_REQUEST",
   "AttributeDefinitions": [
     { "AttributeName": "trace_id", "AttributeType": "S" },
@@ -17,5 +17,5 @@
       "Projection": { "ProjectionType": "ALL" }
     }
   ],
-  "Tags": [{ "Key": "Project", "Value": "sentinel" }]
+  "Tags": [{ "Key": "Project", "Value": "citebound" }]
 }

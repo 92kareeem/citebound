@@ -1,6 +1,6 @@
 // The verification runs in a Web Worker so the page stays responsive while
 // Pyodide downloads and while a verdict is computed. The worker loads the
-// sentinel-proof wheel that build.py placed next to this file: the same code
+// citebound wheel that build.py placed next to this file: the same code
 // that is published to PyPI, not a JavaScript rewrite of it.
 
 "use strict";
@@ -10,7 +10,7 @@ const PYODIDE_INDEX_URL = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/
 
 const PY_SETUP = `
 import json
-from sentinel_proof import __version__, passages_from_texts, verify
+from citebound import __version__, passages_from_texts, verify
 
 def _run(payload: str) -> str:
     p = json.loads(payload)
@@ -39,7 +39,7 @@ async function init(wheelUrl) {
   importScripts(`${PYODIDE_INDEX_URL}pyodide.js`);
   const pyodide = await self.loadPyodide({ indexURL: PYODIDE_INDEX_URL });
 
-  status("Installing sentinel-proof…");
+  status("Installing citebound…");
   await pyodide.loadPackage(wheelUrl, { messageCallback: () => {} });
 
   packageVersion = String(pyodide.runPython(PY_SETUP));

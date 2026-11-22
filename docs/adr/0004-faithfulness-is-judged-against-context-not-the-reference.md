@@ -18,7 +18,7 @@ Source document:
 > requires the on-call certification exam (code OPS-204) with a passing score
 > of 80%.
 
-Sentinel's answer:
+Citebound's answer:
 
 > Production database access requires manager approval and passing the on-call
 > certification exam (code OPS-204) with a score of at least 80%.
@@ -29,7 +29,7 @@ reference."*
 
 ### Question 12 — *"How do system access requests work?"*
 
-Sentinel's answer reproduced the passage essentially verbatim, including the
+Citebound's answer reproduced the passage essentially verbatim, including the
 OPS-204 sentence.
 
 Judge: **0.5** — *"adds an unsupported detail about a certification exam, which
@@ -57,7 +57,7 @@ Under the old ruler, the way to raise the faithfulness score was to make the
 system answer more tersely and hew closer to reference phrasing — abandoning
 true, cited, document-supported content. That is a direct attack on the product
 premise. Anyone tuning prompts against this number, in good faith, would have
-made Sentinel worse and watched the metric improve.
+made Citebound worse and watched the metric improve.
 
 It also means the historically reported 0.950–0.955 figures **understated**
 real faithfulness.

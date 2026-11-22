@@ -27,7 +27,7 @@ from app.models.schemas import Problem
 
 def create_app() -> FastAPI:
     settings = get_settings()
-    app = FastAPI(title="Sentinel", version=__version__)
+    app = FastAPI(title="Citebound", version=__version__)
     origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
     if settings.local_mode:
         # The Vite dev server and the compose web container run on a different

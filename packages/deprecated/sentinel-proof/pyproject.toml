@@ -1,0 +1,40 @@
+[project]
+name = "sentinel-proof"
+version = "0.1.3"
+description = "Renamed to citebound. This is the final sentinel-proof release: it installs citebound and re-exports it unchanged. Please `pip install citebound`."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+keywords = ["citebound", "deprecated", "renamed", "rag", "hallucination", "grounding", "citations"]
+classifiers = [
+    "Development Status :: 7 - Inactive",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = ["citebound>=0.2.0"]
+
+[project.urls]
+Homepage = "https://github.com/92kareeem/citebound"
+"New package" = "https://pypi.org/project/citebound/"
+Changelog = "https://github.com/92kareeem/citebound/blob/main/packages/citebound/CHANGELOG.md"
+Issues = "https://github.com/92kareeem/citebound/issues"
+
+[project.scripts]
+sentinel-proof = "sentinel_proof.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

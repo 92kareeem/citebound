@@ -1,7 +1,7 @@
 # Phase 2 Progress Log
 
 ## Overview
-This document tracks the Phase 2 evolution of Sentinel from a working MVP into a more product-like AI assistant.
+This document tracks the Phase 2 evolution of Citebound from a working MVP into a more product-like AI assistant.
 
 ## Phase 1 baseline
 Completed before Phase 2:

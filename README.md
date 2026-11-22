@@ -1,282 +1,335 @@
 <div align="center">
 
-# Sentinel
+# Citebound
 
-### Stop deploying RAG toys.
+### Every claim bound to the passage it cites.
 
-**Sentinel is the self-healing, zero-trust agentic RAG engine with deterministic grounding, cost governance, and an automated regression ratchet.**
+**Citebound is the verification layer for LLM answers.** It checks each sentence a model produces against the evidence that sentence cites, repairs citations that point at the wrong source, strips claims the evidence does not carry, and refuses what it cannot ground — deterministically, with no model call, no API key and no network.
 
-Every sentence it ships is cited and checked against the passage it cites. What it cannot verify, it refuses — and every refusal becomes a to-do item for whoever owns the documents. Every mistake a reader reports can become a permanent test that CI enforces.
+[Quickstart](#quickstart-30-seconds) · [How accurate is it](#how-accurate-is-it-really) · [MCP server](#use-it-from-an-agent) · [Benchmarks](#the-benchmarks) · [Reference platform](#the-reference-platform) · [Decisions](#architecture-decisions)
 
-[Quickstart](#60-second-quickstart) · [Why Sentinel](#why-sentinel) · [Architecture](#architecture) · [Benchmarks](#benchmarks--evals) · [Decisions](#architecture-decisions) · [Learn the codebase](docs/LEARNING_PATH.md)
+[![PyPI](https://img.shields.io/pypi/v/citebound?label=citebound)](https://pypi.org/project/citebound/)
+[![MCP server](https://img.shields.io/pypi/v/citebound-mcp?label=citebound-mcp)](https://pypi.org/project/citebound-mcp/)
+[![License: Apache-2.0](https://img.shields.io/badge/library-Apache--2.0-blue.svg)](packages/citebound/LICENSE)
+[![No API key](https://img.shields.io/badge/API%20key-not%20required-success)](#quickstart-30-seconds)
+[![Zero dependencies](https://img.shields.io/badge/dependencies-zero-success)](packages/citebound/pyproject.toml)
 
-`FastAPI` · `LangGraph` · `FAISS + BM25` · `Groq / OpenAI / Azure / Anthropic / Ollama` · `React + TypeScript` · `AWS free tier`
-
-[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+**[Try it in your browser →](https://92kareeem.github.io/citebound/)** Nothing is uploaded; the library runs locally in WebAssembly.
 
 </div>
 
-> **Only need the hallucination check?** The grounding gate is published on its own as
-> [`sentinel-proof`](packages/sentinel-proof) ([PyPI](https://pypi.org/project/sentinel-proof/), Apache-2.0):
-> `pip install sentinel-proof`, no dependencies, no model calls. It checks every number and
-> citation in an LLM answer against the retrieved passages, re-points wrong citations,
-> strips unsupported claims and refuses what can't be grounded. Works with LangChain,
-> LlamaIndex or any retriever. **[Try it in your browser](https://92kareeem.github.io/sentinel-rag/)**: nothing is uploaded.
-> Using an agent? [`sentinel-proof-mcp`](packages/sentinel-proof-mcp) puts the same check behind one MCP tool for
-> Claude Desktop, Claude Code, Cursor or any MCP client: `uvx sentinel-proof-mcp`.
-
 ---
 
-## 60-second quickstart
+## The problem
 
-You need Docker. You do not need Python, Node, an AWS account or, for the demo, an API key.
+A language model given retrieved documents will still produce a fluent, confident, well-cited sentence that the documents do not support. It will quote a number that appears nowhere. It will attach `[2]` to a claim that passage 2 contradicts. It will answer a question the evidence cannot answer, because answering is what it was trained to do.
 
-```bash
-git clone https://github.com/92kareeem/sentinel-rag.git
-cd sentinel-rag
-cp .env.example .env        # optional: add a free Groq key from console.groq.com
-docker compose up --build   # then open http://localhost:5173
-```
+Every popular mitigation asks a second model whether the first model was lying. That is useful and it is also another thing that can hallucinate, cost money, add latency, and quietly drift between releases.
 
-On first start the API indexes the sample policy documents in [`corpus/`](corpus). Then (steps 2–4 call a real model, so they need a provider key in `.env`):
+**Citebound asks a different question.** Not "is this claim true?" — a question no library can answer — but "does the passage this sentence cites actually contain what the sentence asserts?" That question has a deterministic answer, and a deterministic answer can be enforced, reproduced, tested in CI, and shown to an auditor.
 
-1. **Click _Chaos demo_** in the header and run all five attacks: prompt injection, PII leak, a planted hallucination, an out-of-scope question and budget exhaustion. Each card shows which layer stopped it, and the path the request took through the graph.
-2. **Ask** _"What restocking fee applies in India?"_ and watch each verification stage stream in. Click a citation: your browser recomputes its SHA-256 and proves the quote is the exact span of the indexed file.
-3. **Ask** _"What is the parental leave policy for contractors?"_ It refuses. Open **Control plane → Corpus gaps** and click **Upload the missing document & re-verify**: the question is asked again and now answers.
-4. **Switch _Acting as_** to _Finance analyst_ and upload a document marked CONFIDENTIAL and shared with the `finance` role. Switch to _Contractor_ or _Other company_ and ask about it: it does not exist for them. The trace shows how many passages were hidden before anything was scored.
-
-No key yet? The chaos demo still runs; model calls are replaced by deterministic stand-ins and labelled _simulated_. Fully air-gapped? `docker compose --profile ollama up` with `LLM_PROVIDER=local`.
-
----
-
-## Why Sentinel?
-
-Most RAG stacks fail in production the same three ways: a fluent answer that the evidence does not support, a cost or latency spike nobody bounded, and a mistake fixed once that quietly comes back. Sentinel is built around those three failures.
-
-| | Naive RAG | Typical agentic RAG | **Sentinel** |
-|---|---|---|---|
-| **Is the answer supported?** | Trusts the model | An LLM judge grades the LLM | LLM critic **plus a deterministic grounding gate** that cannot hallucinate: every number in a claim must appear in the passage it cites, and wrong citations are re-pointed or stripped ([ADR 0003](docs/adr/0003-grounding-is-deterministic-not-only-an-llm-judge.md)) |
-| **When it can't answer** | Guesses | Retries until something comes out | **Refuses, with a reason code.** A refusal is never repaired into a guess ([0001](docs/adr/0001-refusal-is-not-a-repairable-failure.md)) and never carries the rejected draft ([0005](docs/adr/0005-a-refusal-must-never-carry-the-draft-it-rejected.md)) |
-| **Self-healing** | None | Loops on the same input | Bounded repair: one **search** rewrite that never alters the user's question ([0006](docs/adr/0006-the-search-query-is-not-the-users-question.md)), then one model escalation, then refusal |
-| **Routing and cost** | One model | An LLM decides which LLM to call | A measured **heuristic router** ([0002](docs/adr/0002-router-uses-a-heuristic-not-an-llm.md)), hard token and deadline caps enforced *inside* provider calls, deterministic downgrade to the cheap model, per-call cost on every trace |
-| **Access control** | Filter after search, if at all | Metadata filter on the top-k | **Tenant → role → clearance enforced before scoring**: FAISS gets an ID selector, so forbidden rows are never ranked ([0009](docs/adr/0009-access-is-enforced-before-scoring.md)) |
-| **Provenance** | A chunk id | A chunk id | A **SHA-256 the reader can recompute**: file checksum, character span, text |
-| **Streaming** | Raw tokens | Raw tokens | **Stage telemetry, never drafts.** The answer arrives only after it is verified ([0010](docs/adr/0010-streaming-carries-stages-not-drafts.md)) |
-| **Learning from failure** | None | Logs | Every refusal is **diagnosed, clustered and ranked for the document owner** ([0007](docs/adr/0007-failures-are-recorded-as-a-corpus-work-list.md)) |
-| **Not repeating mistakes** | None | An average eval score | A **per-question regression ratchet**: a reviewed failure becomes a test that, once it passes, fails CI if it ever comes back ([0008](docs/adr/0008-a-fixed-mistake-becomes-a-permanent-test.md)) |
-| **Repeated questions** | Re-run | Semantic cache (can serve the wrong question's answer) | Cache of **verified** answers only, keyed by index version and caller visibility ([0011](docs/adr/0011-only-verified-answers-are-cached-keyed-by-index-version.md)) |
-
----
-
-## Use the grounding gate in your own stack
-
-The gate that runs last in Sentinel is also a standalone, dependency-free,
-Apache-2.0 package: [`sentinel-proof`](packages/sentinel-proof). It works
-with any retriever and any model, and most RAG prompts need no change because
-it reads the `[1]`, `[2]` citations they already produce.
-
-```bash
-pip install sentinel-proof
+```python
+pip install citebound
 ```
 
 ```python
-from sentinel_proof import verify, from_langchain
+from citebound import verify, passages_from_texts
+
+passages = passages_from_texts(["Customers may request a refund within 30 days."])
+
+v = verify("Refunds are available within 90 days [1].", passages, citation_style="numeric")
+v.ok                                 # False
+v.claims[0].status                   # ClaimStatus.STRIPPED
+v.claims[0].unsupported_numbers      # ('90',) — the figure appears in no cited passage
+v.safe_text()                        # refusal prose from a reason code, never the rejected draft
+```
+
+No model was called. The same input will give the same answer next year.
+
+---
+
+## Quickstart, 30 seconds
+
+```bash
+pip install citebound
+```
+
+```python
+from citebound import verify, from_langchain
 
 passages = from_langchain(retriever.invoke(question))   # or from_llamaindex(...), or plain strings
 v = verify(llm_answer, passages, question, citation_style="numeric")
 
-v.ok           # every number is in the evidence and every citation points where it says
-v.answer       # the supported sentences, re-cited; fabricated claims stripped
-v.safe_text()  # the answer, or refusal prose if too much was stripped: never the rejected draft
+v.ok            # every figure is in the evidence and every citation points where it claims
+v.answer        # the supported sentences, re-cited, with fabricated claims removed
+v.claims        # per claim: supported | repaired | stripped, and why
+v.safe_text()   # the answer, or refusal prose if too much was stripped
 ```
 
-Per-claim detail (`v.claims`), repaired citations, provenance hashes and a CLI
-for CI are in the [package README](packages/sentinel-proof/README.md).
+Most RAG prompts need no change at all, because Citebound reads the `[1]`, `[2]`
+citations they already emit. Tag style (`[chunk:a1b2]`) works too.
+
+**In CI, or a shell pipeline:**
+
+```bash
+echo "Refunds take 90 days [1]." | citebound check --passages passages.json --numeric
+# exit 1, and it tells you which figure was invented
+```
+
+Python 3.10+. Zero dependencies — the whole library is standard library only,
+so it installs in a Lambda, a container, an air-gapped box or a browser.
 
 ---
 
-## Architecture
+## Use it from an agent
 
-```mermaid
-flowchart LR
-    subgraph Ingress["Guardrail ingress (before any model)"]
-        A[API key → tenant, roles, clearance] --> V[Size + schema] --> I[Injection screen] --> P[PII scrub] --> Q[Quota] --> B[Cost governor]
-    end
+`citebound-mcp` puts the same check behind one MCP tool, so an agent can verify
+its own answer before showing it to anyone.
 
-    B --> C{Verified-answer<br/>cache}
-    C -- hit --> OUT
-    C -- miss --> R[Heuristic router]
-    R --> RET[Snapshot hybrid retriever<br/>FAISS + BM25 → RRF<br/>access enforced before scoring]
-    RET --> S[Synthesizer<br/>evidence fenced as untrusted]
-    S -- INSUFFICIENT_CONTEXT --> RW
-    S --> CR[LLM critic]
-    CR -- pass --> G[Deterministic<br/>grounding gate]
-    CR -- fail --> RW
-    G -- fail --> RW
-    RW[Repair:<br/>1 · rewrite search query<br/>2 · escalate model] --> RET
-    RW -- budget or attempts spent --> REF[Refusal funnel<br/>reason code, no draft]
-    G -- pass --> OUT[Verified, cited answer]
-
-    OUT --> T[(Trace)]
-    REF --> T
-    T --> CB[Casebook<br/>diagnose · cluster]
-    CB --> GAP[Corpus gap work list]
-    GAP -. owner uploads the missing doc .-> RET
-    CB --> RAT[Regression ratchet<br/>human review → pending → enforced]
-    RAT -. CI fails if a fixed mistake returns .-> CI[(CI)]
+```bash
+uvx citebound-mcp
 ```
 
-**The flywheel.** The repair loop heals one request. The casebook remembers what failed and why. The gap report sends corpus failures to the person who can fix them. The ratchet makes each fix permanent. That last loop is what turns a demo into a product that improves.
+```jsonc
+{
+  "mcpServers": {
+    "citebound": { "command": "uvx", "args": ["citebound-mcp"] }
+  }
+}
+```
+
+Works with Claude Desktop, Claude Code, Cursor, VS Code, Windsurf, Cline, Zed,
+OpenAI Agents SDK, Pydantic AI, LangChain and anything else that speaks MCP —
+proven by a nightly compatibility matrix, not by assertion. One-click install
+links and per-client configuration are in the
+[server README](packages/citebound-mcp/README.md). Listed in the official MCP
+registry as `io.github.92kareeem/citebound`.
+
+Because it needs no API key and makes no network call, it is safe to give an
+agent that handles documents you cannot send anywhere.
+
+---
+
+## How accurate is it, really
+
+Two benchmarks ship in this repository and both run in CI. The second one is
+the one that matters, and it is the one most verification tools do not publish.
+
+| Metric | Hand-written, 52 pairs | **Derived from RAGTruth, 134 pairs** |
+|---|---|---|
+| **Pair accuracy** | 60% (31 of 52) | **22% (30 of 134)** |
+| Wrong claims caught | 34 of 51 | 39 of 134 |
+| Right claims dropped | 5 of 53 | 23 of 134 |
+
+The hand-written set changes one operator or one unit at a time, so it says
+precisely which failures the gate can see. The derived set is built from
+[RAGTruth](https://arxiv.org/abs/2401.00396)'s human-labelled hallucination
+spans — every sentence written by a production model and judged by somebody
+other than us — so it says how much of the real problem that reaches.
+
+**Read 22% as the share of real hallucinations a deterministic layer catches on
+its own. It is not a detection rate, and the gap between the two columns is the
+honest measure of this approach's limit.** A lexical gate sees a flipped
+operator and an invented figure. It does not see a paraphrase, or a fabrication
+phrased in the source's own vocabulary. That is what a judge or an NLI model is
+for, and Citebound is the floor underneath one rather than a replacement for it.
+
+Pair accuracy is used because one-sided metrics are trivially gamed: a verifier
+that refuses everything has no false accepts and is useless. You score a pair
+only by rejecting the bad claim **and** keeping its near-identical good twin.
+Refusing everything scores zero. Accepting everything scores zero.
+
+---
+
+## Why not just use an LLM judge
+
+Use both — they answer different questions. This is where each one belongs:
+
+| | LLM-as-judge (Ragas, DeepEval) | Hallucination classifier (NLI) | **Citebound** |
+|---|---|---|---|
+| **Decides** | is this faithful, 0–1 | does the passage entail this | does the cited passage *contain* this |
+| Cost per answer | tokens, every time | a GPU or a hosted call | none |
+| Latency | hundreds of ms to seconds | tens to hundreds of ms | sub-millisecond |
+| Can it hallucinate | yes | it can be wrong, not inventive | **no: no model** |
+| Same answer twice | not guaranteed | yes | **yes, forever** |
+| Repairs the answer | no, it scores | no, it flags | **yes: re-cites, strips, refuses** |
+| Offline / air-gapped | rarely | with a local model | **always** |
+| Catches a paraphrase | yes | yes | **no** — its real limit |
+| Catches an invented number | sometimes | sometimes | **always** |
+
+A judge tells you how you did, after the fact, on a sample. Citebound decides
+what the user is allowed to see, on every answer, and tells you exactly why.
+Scoring and enforcing are not the same job.
+
+---
+
+## What it actually does
+
+Four things, in order, to every answer:
+
+1. **Resolve citations.** `[1]` must point at a passage that was really retrieved. A citation to a passage that does not exist becomes `missing-1` rather than being silently dropped.
+2. **Check the claim against the passage it cites.** Content-word overlap must clear a floor, every figure in the claim must appear in the cited evidence, and polarity must agree — negation, modality (`must` vs `may`), comparison direction (`above` vs `below`), time order (`before` vs `after`) and quantifier strength. A figure is bound to the unit it was quoted with, so "30 days" cannot support "30 months".
+3. **Repair what is repairable.** If the claim is supported by a *different* retrieved passage, the citation is re-pointed there instead of the claim being destroyed. Wrong pointers are a formatting failure, not a lie.
+4. **Strip, then refuse.** Unsupported sentences are removed. If too much of the answer was removed, the whole answer is refused with a reason code — and the refusal **never carries the draft it rejected**, because that draft is the one text the system just decided it could not stand behind.
+
+Every verdict is inspectable: `v.claims` gives per-claim status and the reason,
+and `provenance_hash` lets a reader recompute a SHA-256 and confirm a quote is
+the exact span of the indexed file.
+
+---
+
+## The benchmarks
+
+```bash
+cd packages/citebound
+python benchmark/run.py                           # hand-written, 52 pairs, 16 failure classes
+python benchmark/run.py --dir benchmark/derived    # 134 pairs from RAGTruth's human labels
+python benchmark/run.py --check                    # fail if any class or pinned case regressed
+```
+
+Both run in under a second, with no model and no network. Both are enforced in
+CI against a reviewed baseline that pins each individual case by content hash,
+so a class-level improvement can never hide a case that regressed.
+
+`cases.jsonl` is plain JSONL in both sets, so **any other verifier can be scored
+on identical inputs.** If you build something that beats these numbers, the
+comparison is available and we would like to see it.
+
+The derived set earns its keep immediately: of its 23 false refusals, nine turn
+out not to be grounding failures at all but sentences *about* the evidence
+("the passages do not provide…"), two of which are the model correctly
+declining to answer. No hand-written suite would have found that.
+
+[Benchmark method, limits and label disagreements →](packages/citebound/benchmark/README.md)
+
+---
+
+## The reference platform
+
+The gate did not come from a whiteboard. It was extracted from a working
+agentic RAG system, which is still here, still runs, and is how each guard gets
+exercised against real documents before it ships.
+
+```bash
+git clone https://github.com/92kareeem/citebound.git
+cd citebound
+cp .env.example .env          # optional: a free Groq key from console.groq.com
+docker compose up --build     # then open http://localhost:5173
+```
+
+Click **Chaos demo** and run five attacks — prompt injection, PII leak, a
+planted hallucination, an out-of-scope question, budget exhaustion — and watch
+which layer stops each one. Ask a question it cannot answer and it refuses;
+open **Control plane → Corpus gaps**, upload the missing document, and the same
+question is re-asked and answers. Click any citation and your browser
+recomputes its SHA-256 against the indexed file.
+
+What the platform adds around the gate: hybrid retrieval (FAISS + BM25 with
+reciprocal rank fusion), a LangGraph pipeline with an LLM critic in front of
+the gate, access control enforced *before* scoring so forbidden passages are
+never ranked, hard token and deadline caps inside every provider call, a
+verified-answer cache keyed by index version, a casebook that turns refusals
+into a ranked work list for whoever owns the documents, and a regression
+ratchet that turns a reported mistake into a test CI enforces forever.
+
+It is licensed AGPL-3.0, separately from the Apache-2.0 library, and documented
+in the [system guide](docs/CITEBOUND_SYSTEM_GUIDE.md) and the
+[learning path](docs/LEARNING_PATH.md) — ten checkpoints, each with an offline
+exercise, for reading the codebase from scratch.
+
+<details>
+<summary><strong>Platform details: guarantees per layer, evals, load test, providers</strong></summary>
 
 ### What each layer guarantees
 
 | Layer | Module | Guarantee |
 |---|---|---|
-| Ingress | `guardrails/` | Injection patterns blocked, PII scrubbed before logs, traces or any provider, per-user quota, request budget allocated |
-| Router | `agents/router.py` | Deterministic model choice; the trace records *who* decided |
-| Retriever | `agents/retriever.py`, `rag/` | Reads one immutable index snapshot per request; unauthorized rows never scored |
+| Ingress | `guardrails/` | Injection patterns blocked, PII scrubbed before logs or any provider, per-user quota, request budget allocated |
+| Router | `agents/router.py` | Deterministic model choice; the trace records who decided |
+| Retriever | `agents/retriever.py`, `rag/` | One immutable index snapshot per request; unauthorized rows never scored |
 | Synthesizer | `agents/synthesizer.py` | Document text is fenced and labelled untrusted data, never instructions |
-| Critic | `agents/critic.py` | Verdicts are schema-validated; a malformed verdict fails closed and its tokens are still counted |
-| Grounding | `guardrails/grounding.py` | Citations point at retrieved text; numbers appear in the cited passage; unsupported sentences stripped; mostly-stripped answers rejected |
+| Critic | `agents/critic.py` | Verdicts are schema-validated; a malformed verdict fails closed and its tokens still count |
+| Grounding | `guardrails/grounding.py` | An adapter over the `citebound` package: citations resolved, figures checked, unsupported sentences stripped |
 | Refusal | `agents/graph.py` | One funnel, three reason codes, prose generated from the code |
 | Providers | `llm/` | One retry core for Groq, OpenAI, Azure, Anthropic and local models; the deadline bounds every attempt and every backoff |
-| Publication | `rag/index_store.py`, `rag/index_lock.py` | Immutable versioned index, atomic pointer swap, DynamoDB lease lock across instances |
-| Lifecycle | `documents/registry.py` | Explicit state machine with compare-and-set writes; publish contention dead-letters to a retryable state |
+| Publication | `rag/index_store.py` | Immutable versioned index with an atomic pointer swap |
+| Lifecycle | `documents/registry.py` | Explicit state machine with compare-and-set writes |
 
----
+### Evals
 
-## The control plane
-
-One dialog, four tabs, for whoever operates the system:
-
-- **Telemetry**: p50 and p95 latency, token burn per hour, estimated cost per answer, refusal, cache-hit and self-repair rates, budget downgrades, a per-node time and token profile, and hourly volume. All of it is computed on read from traces, so it costs nothing while nobody looks.
-- **Corpus gaps**: unanswered and reader-flagged questions, clustered by topic and ranked by frequency, each with the recommended fix and a one-click upload that re-asks the question.
-- **Quality ratchet**: failures waiting for review, promotion to a pending test with a reviewed reference answer, retirement with a reason, and the exact CLI command when the suite lives in git.
-- **Traces**: every request drawn as lanes of attempts, with what each node did, how long it took, what it cost, and where it repaired.
-
----
-
-## Benchmarks & evals
-
-Two suites, two kinds of gate, both in [`evals/`](evals):
-
-| Suite | Gate | Question it answers |
-|---|---|---|
-| `golden_dataset.json` (20 questions, 3 unanswerable) | **Averages**: faithfulness ≥ 0.75, unanswerable refusal ≥ 2/3 | Is the system good overall? |
-| `regressions.json` (grows from real failures) | **Per question**: every enforced item must pass | Did a mistake we already fixed come back? |
-
-Last full run (`evals/report.md`, judge `openai/gpt-oss-20b`):
-
-| Metric | Value |
-|---|---|
-| Mean faithfulness (judged against retrieved context, [ADR 0004](docs/adr/0004-faithfulness-is-judged-against-context-not-the-reference.md)) | **1.000** |
-| Mean completeness (judged against the reference) | 1.000 |
-| Retrieval hit-rate (top-5) | 100% |
-| Unanswerable questions refused | 3 / 3 |
-| False refusals on answerable questions | 0 / 17 |
-| Mean tokens per query | 1,417 |
-
-Measured improvements behind the decisions: refusal short-circuit took p95 from 25.3 s to 12.1 s ([0001](docs/adr/0001-refusal-is-not-a-repairable-failure.md)); retiring the LLM router removed a false refusal and 14% of tokens ([0002](docs/adr/0002-router-uses-a-heuristic-not-an-llm.md)).
+Two suites, two kinds of gate, in [`evals/`](evals): a golden set judged on
+averages, and a regression suite where every enforced item must pass
+individually. Last full run (judge `openai/gpt-oss-20b`): mean faithfulness
+1.000, retrieval hit-rate 100%, 3/3 unanswerable questions refused, 0/17 false
+refusals, 1,417 mean tokens per query.
 
 ```bash
-make eval            # golden set + ratchet, live model; writes evals/report.md
-make regressions     # just the ratchet, e.g. after a fix
-python evals/promote.py list                  # failures not yet tests
-python evals/promote.py promote <case_id>     # reviewed failure -> pending test
-python evals/promote.py retire R001 --reason "policy changed"
+make eval            # golden set + ratchet, live model
+make regressions     # just the ratchet, after a fix
 ```
-
-The eval workflow runs nightly and on PRs labelled `run-evals`. Every PR runs the unit suites, lint, types, the frontend build, the Lambda image build and start, and a `docker compose up` smoke test that asserts every chaos scenario is caught.
 
 ### Load test
 
-Measured with JMeter against one API process capped at 2 CPUs, with a stand-in model
-answering in 300 ms so the numbers are Sentinel's own cost, not a provider's rate limit
-([method](benchmarks/README.md), [full report](docs/benchmarks/2026-11-15/README.md)).
-A rate counts as sustained when errors stay at or under 1% and p95 stays under 250 ms
-(no model call) or 2 s (full answer).
+JMeter against one API process capped at 2 CPUs, with a stand-in model
+answering in 300 ms so the numbers are the system's own cost
+([method](benchmarks/README.md)). Sustained means errors ≤1% and p95 under
+250 ms with no model call, 2 s for a full answer.
 
-| Scenario | Sustained | p95 at that rate |
+| Scenario | Sustained | p95 |
 |---|---:|---:|
 | Health check | 989/s | 114 ms |
 | Prompt injection blocked before any model call | 989/s | 56 ms |
-| Repeated question, served from the verified-answer cache | 248/s | 13 ms |
-| New question, full verified answer (retrieval, two model calls, grounding gate) | 49/s | 1.6 s |
-| New question, streamed | 39/s | 1.0 s |
+| Repeated question from the verified-answer cache | 248/s | 13 ms |
+| New question, full verified answer | 49/s | 1.6 s |
 
-The first run found full answers capped at 10/s: every model call built a new HTTP
-client (SSL context, DNS, TCP connect), and the embedding engine spun eight threads in
-a two-CPU container. Fixing both cut CPU per answer from ~140 ms to ~23 ms, which
-raised full answers to 49/s, five times the original rate.
+The first run capped full answers at 10/s: every model call was building a new
+HTTP client, and the embedding engine spun up eight threads in a two-CPU
+container. Fixing both cut CPU per answer from ~140 ms to ~23 ms.
 
-```bash
-make bench           # needs Java 17+ and JMeter 5.6+; ~20 minutes
+### Providers
+
+Set `LLM_PROVIDER` in `.env`: `groq` (default, free tier), `openai`, `azure`,
+`anthropic`, or `local` for Ollama / vLLM. Every adapter shares one retry,
+deadline and circuit-breaker core, so failure behaviour is identical across
+vendors. Fully air-gapped: `docker compose --profile ollama up` with
+`LLM_PROVIDER=local`.
+
+### Access control
+
+Every document has a tenant, the roles it is shared with, and a classification
+(`PUBLIC < INTERNAL < CONFIDENTIAL < RESTRICTED`). Access is enforced before
+scoring: FAISS receives an ID selector, so forbidden rows are never ranked.
+Anything not visible is a 404, never a 403. Local mode ships five identities
+(`demo-local`, `finance-local`, `contractor-local`, `admin-local`,
+`globex-local`) for trying this from the browser.
+
+</details>
+
+---
+
+## Repository layout
+
 ```
-
----
-
-## Choose your model
-
-Set `LLM_PROVIDER` in `.env`. Every adapter shares one retry, deadline and circuit-breaker core, so failure behaviour is identical across vendors.
-
-| Provider | `LLM_PROVIDER` | Notes |
-|---|---|---|
-| Groq | `groq` (default) | Free tier, very low latency. `openai/gpt-oss-20b` and `-120b` by default |
-| OpenAI | `openai` | `OPENAI_API_KEY`, `OPENAI_MODEL_SIMPLE/COMPLEX` |
-| Azure OpenAI | `azure` | `AZURE_OPENAI_ENDPOINT`, deployment names as models |
-| Anthropic | `anthropic` | `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL_SIMPLE/COMPLEX` |
-| Local / air-gapped | `local` | Ollama or vLLM (OpenAI-compatible); `docker compose --profile ollama up` |
-
-Prices for cost telemetry live in `backend/app/llm/pricing.py` and can be corrected with `LLM_PRICING_OVERRIDES` without a release.
-
----
-
-## Access control
-
-Every document has a **tenant**, the **roles** it is shared with (empty means only the uploader and tenant admins), and a **classification**: `PUBLIC < INTERNAL < CONFIDENTIAL < RESTRICTED`. A caller sees a document when it is in their tenant, they own it or hold a matching role or are a tenant admin, and their clearance is at least its level. Anything else is a 404, never a 403.
-
-Local mode ships five identities for trying this from the browser:
-
-| API key | Identity |
-|---|---|
-| `demo-local` | acme · employee · INTERNAL |
-| `finance-local` | acme · finance · CONFIDENTIAL |
-| `contractor-local` | acme · contractor · PUBLIC |
-| `admin-local` | acme · tenant admin · RESTRICTED |
-| `globex-local` | globex · employee · INTERNAL |
-
----
-
-## Deploy on the AWS free tier
-
-The same code runs serverless with `STORAGE_BACKEND=aws`: Lambda (container image, ONNX embeddings, no torch) behind a Function URL, DynamoDB for registry, casebook, traces, quotas and the publication lock, S3 for versioned index artifacts and uploads, SSM SecureString for the provider key, and CloudFront for the UI.
-
-```bash
-export AWS_ACCOUNT_ID=... AWS_REGION=ap-south-1
-aws ssm put-parameter --name /sentinel/groq-api-key --type SecureString --value <key>
-make ingest && make deploy     # idempotent; ends with a /healthz smoke test
-python infra/seed_users.py     # issues hashed API keys
-```
-
-[`infra/deploy.sh`](infra/deploy.sh) creates or updates every resource with a least-privilege IAM role and no wildcards. Nothing runs on a schedule: telemetry and gap reports are computed on read, so an idle deployment costs nothing.
-
----
-
-## Run it without Docker
-
-```bash
-make install        # venv (outside OneDrive on Windows) + frontend deps
-make ingest         # index ./corpus
-make serve          # API on :8000 with the chaos demo enabled
-make web            # UI on :5173
-make check          # lint, types, backend and frontend tests
+packages/citebound/            the verification library (Apache-2.0, pip install citebound)
+packages/citebound/benchmark/  both benchmark sets, the scorer and the pinned baselines
+packages/citebound-mcp/        the same check as an MCP server (pip install citebound-mcp)
+packages/deprecated/           final shims for the old sentinel-proof names
+playground/                    browser playground, Pyodide, nothing uploaded
+backend/app/agents/            LangGraph nodes and routing (graph.py is the state machine)
+backend/app/guardrails/        auth, access, injection, PII, quota, cost, grounding adapter
+backend/app/rag/               chunking, PDF, embeddings, FAISS/BM25, snapshots, cache
+backend/app/learning/          casebook (failures to work list) and ratchet (fixes to tests)
+frontend/                      React + TypeScript UI and control plane
+evals/                         golden set, regression suite, judge prompts, promotion CLI
+docs/                          system guide, ADRs, learning path
 ```
 
 ---
 
 ## Architecture decisions
 
-Every non-obvious choice is written down with the measurement behind it and the alternatives it rules out.
+Every non-obvious choice is written down with the measurement behind it and the
+alternatives it rules out.
 
 | ADR | Decision |
 |---|---|
@@ -292,64 +345,72 @@ Every non-obvious choice is written down with the measurement behind it and the 
 | [0010](docs/adr/0010-streaming-carries-stages-not-drafts.md) | Streaming carries stages, never drafts |
 | [0011](docs/adr/0011-only-verified-answers-are-cached-keyed-by-index-version.md) | Only verified answers are cached |
 
-New to the code? Follow the [learning path](docs/LEARNING_PATH.md): ten checkpoints, each with an offline exercise.
-
 ---
 
 ## Known limitations
 
-Stated plainly, because a system whose guarantees are precisely scoped is more trustworthy than one whose guarantees are overstated.
+Stated plainly, because a system whose guarantees are precisely scoped is more
+trustworthy than one whose guarantees are overstated.
 
-- **Grounding is lexical, not semantic.** It catches unsupported numbers, fabricated citations and claims unrelated to their evidence. Whether a passage *entails* a claim is the critic's job, and the critic can be wrong ([ADR 0003](docs/adr/0003-grounding-is-deterministic-not-only-an-llm-judge.md)).
-- **No OCR.** Scanned PDFs are rejected with `UNSUPPORTED_SCANNED_DOCUMENT` rather than indexed as empty.
-- **Follow-up questions are not resolved before retrieval.** "What about contractors?" is searched literally.
-- **Whole-document questions use top-k.** "List every exception" gets the most similar passages, not all of them.
-- **Supersession is not modelled.** Two documents giving different refund windows are both evidence.
-- **Identity is an API key mapped to a user record.** There is no SSO or OIDC yet; the browser holds a quota-limited demo key.
-- **On Lambda, streaming is buffered** by the Function URL adapter: the result is identical, but progress arrives at the end. The answer cache is per warm container.
-- **Regressions run against the eval corpus.** Per-tenant regression runs against each tenant's own index are not built.
-- **A tenant-wide document listing in AWS is a filtered scan.** A `tenant_id` index is the upgrade at volume.
+- **The gate is lexical, not semantic.** It catches invented figures, fabricated citations, flipped operators and claims unrelated to their evidence. It does not catch a faithful-looking paraphrase. The derived benchmark above quantifies exactly how much that costs.
+- **English only, for now.** Content words are matched as `[A-Za-z]{2,}`, so the polarity and overlap checks do not yet work on other scripts. The numeric and citation checks do.
+- **One claim per sentence.** Claim decomposition is not implemented, so a sentence where only half is supported is judged as a whole.
+- **Supersession is not modelled.** Two documents giving different refund windows are both treated as evidence.
+- **Platform:** no OCR (scanned PDFs are rejected, not indexed empty); follow-up questions are searched literally rather than resolved against history; whole-document questions use top-k, so "list every exception" gets the most similar passages rather than all of them; identity is an API key mapped to a user record, with no SSO yet.
 
 ---
 
-## Repository layout
+## Was this called something else?
 
+Yes. `citebound` was `sentinel-proof`, and `citebound-mcp` was
+`sentinel-proof-mcp`. The name collided with Microsoft Sentinel and with
+HashiCorp Sentinel — the second close enough in purpose to be genuinely
+confusing — so the project could not be found by the people who needed it.
+Citebound names what the library actually enforces and promises nothing more.
+
+The old packages have a final shim release that depends on the new one and
+re-exports it, so **pinned installs keep working**. They are deprecated, not
+yanked. To move over:
+
+```diff
+- from sentinel_proof import verify
++ from citebound import verify
 ```
-packages/sentinel-proof/  the grounding gate as a standalone Apache-2.0 package (pip install sentinel-proof)
-packages/sentinel-proof-mcp/  the same check as an MCP server (pip install sentinel-proof-mcp)
-playground/               browser playground for that package (GitHub Pages, Pyodide; nothing uploaded)
-backend/app/agents/        LangGraph nodes and routing (graph.py is the whole state machine)
-backend/app/guardrails/    auth, access, injection, PII, quota, cost governor, grounding (adapter over the package)
-backend/app/llm/           provider adapters over one resilient HTTP core, pricing
-backend/app/rag/           chunking, PDF, embeddings, FAISS/BM25, snapshots, cache, publication
-backend/app/learning/      casebook (failures → work list) and ratchet (fixes → tests)
-backend/app/api/           query pipeline, streaming, control plane, documents, chaos demo
-frontend/                  React + TypeScript UI and control plane
-evals/                     golden set, regression suite, judge prompts, promotion CLI
-benchmarks/                JMeter load test, stand-in model, runner and report builder
-corpus/                    the sample business documents that get indexed
-docs/                      system guide, ADRs, learning path, benchmark reports (never indexed)
-docker/ · infra/           compose images, Lambda image, idempotent AWS deploy
-```
+
+Nothing else changes.
+
+---
+
+## Contributing
+
+The most valuable contribution is a case the gate gets wrong. Reduce it to a
+minimal pair — one claim that must be rejected, one near-identical claim that
+must be kept — and add it to `benchmark/cases.jsonl`. That is how every guard
+in here started.
+
+[CONTRIBUTING.md](CONTRIBUTING.md) · [SECURITY.md](SECURITY.md) · [Report a wrong verdict](https://github.com/92kareeem/citebound/issues/new?template=gate_wrong_verdict.yml)
 
 ---
 
 ## License
 
-Sentinel is licensed under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0-only).
-The [`sentinel-proof`](packages/sentinel-proof) package is licensed separately under
-[Apache-2.0](packages/sentinel-proof/LICENSE), so the grounding gate can be used in any project.
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how to get involved and [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
+The [`citebound`](packages/citebound) library and
+[`citebound-mcp`](packages/citebound-mcp) server are
+**[Apache-2.0](packages/citebound/LICENSE)**, so the verification layer can be
+used in any project, commercial or not.
 
-You may use, modify and self-host it, including commercially. If you run a
-modified version as a network service, you must offer its users the source of
-your modifications under the same license. The PDF parser, PyMuPDF, is itself
-AGPL-3.0, which is why the project uses the same license.
+The reference platform is **[AGPL-3.0-only](LICENSE)**. You may use, modify and
+self-host it, including commercially; if you run a modified version as a
+network service, you must offer its users the source of your modifications
+under the same license. The PDF parser, PyMuPDF, is itself AGPL-3.0, which is
+why the platform uses the same license.
 
 ---
 
 <div align="center">
 
-Built by [Syed Abdul Kareem Ahmed](https://linkedin.com/in/92kareem). If Sentinel saves you from shipping a confident wrong answer, a ⭐ helps others find it.
+Built by [Syed Abdul Kareem Ahmed](https://linkedin.com/in/92kareem).
+
+If Citebound stops you shipping a confident wrong answer, a ⭐ helps others find it.
 
 </div>

@@ -1,8 +1,8 @@
-name: sentinel-proof-mcp compatibility
+name: citebound-mcp compatibility
 
 # Does the released server still work from the agent frameworks the README
 # promises? Nightly, against the latest release of each framework and the
-# latest sentinel-proof-mcp on PyPI, installed the way a user installs it
+# latest citebound-mcp on PyPI, installed the way a user installs it
 # (uv tool). A framework renaming its MCP client fails this build instead of
 # a user's agent. Also runs on pull requests that touch the checks themselves.
 
@@ -12,12 +12,12 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
-      - "packages/sentinel-proof-mcp/compat/**"
+      - "packages/citebound-mcp/compat/**"
       - ".github/workflows/mcp-compat.yml"
 
 defaults:
   run:
-    working-directory: packages/sentinel-proof-mcp
+    working-directory: packages/citebound-mcp
 
 jobs:
   frameworks:
@@ -39,17 +39,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - name: Install the released server the way users do
+      - name: Install the server the way users do
+        # Prefers the published package. Falls back to this checkout so the
+        # matrix still runs before a new version reaches PyPI, which is the
+        # case on the pull request that introduces one.
         run: |
-          uv tool install sentinel-proof-mcp
-          sentinel-proof-mcp --version
+          uv tool install citebound-mcp || uv tool install --from ./packages/citebound-mcp citebound-mcp
+          citebound-mcp --version
+        working-directory: .
       - name: Install the latest ${{ matrix.framework }} in its own environment
         run: |
           uv venv .fw
           uv pip install --python .fw/bin/python "${{ matrix.install }}"
           .fw/bin/python -c "import importlib.metadata as m; print('mcp', m.version('mcp'))"
       - name: Launch the server from ${{ matrix.framework }} and verify an answer
-        run: .fw/bin/python compat/${{ matrix.script }} "$(command -v sentinel-proof-mcp)"
+        run: .fw/bin/python compat/${{ matrix.script }} "$(command -v citebound-mcp)"
 
   clients:
     name: MCP Inspector (reference client)
@@ -60,12 +64,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - run: uv tool install sentinel-proof-mcp
+      - name: Install the server the way users do
+        # Prefers the published package. Falls back to this checkout so the
+        # matrix still runs before a new version reaches PyPI, which is the
+        # case on the pull request that introduces one.
+        run: |
+          uv tool install citebound-mcp || uv tool install --from ./packages/citebound-mcp citebound-mcp
+          citebound-mcp --version
+        working-directory: .
       - name: List tools and call verify_answer through the official inspector CLI
         run: |
-          npx --yes @modelcontextprotocol/inspector --cli sentinel-proof-mcp --method tools/list | tee tools.json
+          npx --yes @modelcontextprotocol/inspector --cli citebound-mcp --method tools/list | tee tools.json
           grep -q '"verify_answer"' tools.json
-          npx --yes @modelcontextprotocol/inspector --cli sentinel-proof-mcp --method tools/call \
+          npx --yes @modelcontextprotocol/inspector --cli citebound-mcp --method tools/call \
             --tool-name verify_answer \
             --tool-arg 'answer=Refunds within 30 days [1].' \
             --tool-arg 'passages=["Refunds are allowed within 30 days."]' | tee call.json

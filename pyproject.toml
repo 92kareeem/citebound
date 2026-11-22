@@ -1,7 +1,7 @@
 [project]
-name = "sentinel"
+name = "citebound-platform"
 version = "1.0.0"
-description = "Self-healing, zero-trust, cost-bounded agentic RAG with deterministic grounding and a regression ratchet"
+description = "Citebound Platform: the self-healing, zero-trust, cost-bounded agentic RAG reference implementation that runs the citebound gate in production"
 requires-python = ">=3.12"
 license = "AGPL-3.0-only"
 license-files = ["LICENSE"]
@@ -35,9 +35,9 @@ dependencies = [
     "numpy~=2.1",
     "python-multipart~=0.0.12",
     # The grounding gate, as the standalone Apache-2.0 package in
-    # packages/sentinel-proof. Resolved from the workspace here; pip-based
+    # packages/citebound. Resolved from the workspace here; pip-based
     # installs (CI, Docker, `make install`) install that directory explicitly.
-    "sentinel-proof>=0.1.0",
+    "citebound>=0.2.0",
 ]
 
 [project.optional-dependencies]
@@ -83,7 +83,11 @@ ignore_missing_imports = true      # faiss/rank_bm25/fitz ship no type stubs
 mypy_path = "backend"
 
 [tool.uv.workspace]
-members = ["packages/*"]
+# Named one by one, not globbed: packages/deprecated holds the shims for the
+# old sentinel-proof names, which are built and released on their own and must
+# not join this resolution.
+members = ["packages/citebound", "packages/citebound-mcp"]
+exclude = ["packages/deprecated/*"]
 
 [tool.uv.sources]
-sentinel-proof = { workspace = true }
+citebound = { workspace = true }

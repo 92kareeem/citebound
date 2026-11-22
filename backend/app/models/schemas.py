@@ -33,7 +33,7 @@ def is_insufficient_context(answer: str) -> bool:
     it is scored by the critic, fails on relevance, and burns a full repair
     round to re-derive the refusal the model already gave.
 
-    Still requires the sentinel to be the WHOLE answer, so a genuine answer
+    Still requires the citebound to be the WHOLE answer, so a genuine answer
     that merely mentions the token is not mistaken for a refusal.
     """
     return bool(_INSUFFICIENT_RE.match(_CITATION_TAG_RE.sub("", answer)))

@@ -81,7 +81,7 @@ export function MessageBubble({ message, onCiteClick, trace }: Props) {
     // reason asks the reader to do something different.
     const copy = REFUSAL_COPY[message.reasonCode] ?? REFUSAL_COPY.INSUFFICIENT_EVIDENCE;
     return (
-      <article className="card card-refusal" aria-label="Sentinel could not answer">
+      <article className="card card-refusal" aria-label="Citebound could not answer">
         <h3 className="refusal-title">
           <Icon name="alert" />
           {copy.title}
@@ -104,7 +104,7 @@ export function MessageBubble({ message, onCiteClick, trace }: Props) {
   const byId = new Map(message.citations.map((c) => [c.chunk_id, c]));
 
   return (
-    <article className="card" aria-label="Sentinel's answer">
+    <article className="card" aria-label="Citebound's answer">
       <div className="answer-body">
         {renderAnswerMarkdown(message.text, message.citations, (id) => {
           const c = byId.get(id);

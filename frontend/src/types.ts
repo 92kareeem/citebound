@@ -46,12 +46,12 @@ export const DOCUMENT_ERROR_HELP: Record<string, string> = {
   ENCRYPTED_DOCUMENT:
     "This PDF is password-protected. Upload a copy without a password.",
   UNSUPPORTED_SCANNED_DOCUMENT:
-    "This looks like a scanned/image-only PDF. Sentinel does not run OCR — upload a text-based PDF.",
+    "This looks like a scanned/image-only PDF. Citebound does not run OCR — upload a text-based PDF.",
   CORRUPT_DOCUMENT: "This file could not be opened as a PDF. It may be damaged.",
   EMPTY_DOCUMENT: "This document has no pages.",
   NO_EXTRACTABLE_TEXT:
     "Almost no text could be extracted, so this document cannot be answered from reliably.",
-  TOO_MANY_PAGES: "This document has more pages than Sentinel will index.",
+  TOO_MANY_PAGES: "This document has more pages than Citebound will index.",
   UPLOAD_ABANDONED:
     "This upload never finished, so the file was never received. Upload it again.",
   TOO_LARGE: "This document is over the 1 MB size limit.",

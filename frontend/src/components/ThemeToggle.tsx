@@ -5,7 +5,7 @@ type Theme = "light" | "dark";
 
 function getInitialTheme(): Theme {
   try {
-    const saved = localStorage.getItem("sentinel-theme");
+    const saved = localStorage.getItem("citebound-theme");
     if (saved === "light" || saved === "dark") return saved;
   } catch {
     // localStorage unavailable (private mode, etc.) — fall through.
@@ -25,7 +25,7 @@ export function ThemeToggle() {
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     try {
-      localStorage.setItem("sentinel-theme", theme);
+      localStorage.setItem("citebound-theme", theme);
     } catch {
       // Non-fatal — the theme just won't persist across reloads.
     }

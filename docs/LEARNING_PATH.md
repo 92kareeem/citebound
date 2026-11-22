@@ -1,4 +1,4 @@
-# Learning Sentinel, one idea at a time
+# Learning Citebound, one idea at a time
 
 Ten checkpoints, in the order the code depends on them. Each names the files
 to read, the idea to take away, and an exercise that proves you have it. The
@@ -39,7 +39,7 @@ asked.
 
 ## 3. A deterministic gate behind an LLM judge
 
-**Read:** `packages/sentinel-proof/src/sentinel_proof/grounding.py` (the gate, a standalone package), `guardrails/grounding.py` (the platform's adapter), `agents/critic.py`, ADR 0003
+**Read:** `packages/citebound/src/citebound/grounding.py` (the gate, a standalone package), `guardrails/grounding.py` (the platform's adapter), `agents/critic.py`, ADR 0003
 
 The critic is a model and can be fooled in the same direction as the model
 it grades. The grounding gate contains no model: every number in a claim must
@@ -91,7 +91,7 @@ rule.
 ADR 0009
 
 Filtering after ranking lets forbidden rows crowd out the caller's own
-evidence. Sentinel hands FAISS the allowed rows as a selector, so excluded
+evidence. Citebound hands FAISS the allowed rows as a selector, so excluded
 rows are never scored.
 
 **Exercise:** Upload a document as *Finance analyst* with classification
@@ -141,5 +141,5 @@ make regressions          # needs a provider key: judges the answer
 
 ## Where to go next
 
-- `docs/SENTINEL_SYSTEM_GUIDE.md` — the long-form architecture guide
+- `docs/CITEBOUND_SYSTEM_GUIDE.md` — the long-form architecture guide
 - `docs/adr/` — every decision, the measurement behind it, and what it rules out

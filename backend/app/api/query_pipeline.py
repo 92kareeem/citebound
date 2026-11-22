@@ -231,7 +231,7 @@ def finalize(prepared: Prepared, result: Mapping[str, Any]) -> QueryResponse | R
     if refused:
         # Falls back to INSUFFICIENT_EVIDENCE for the one path that reaches
         # here without passing through refusal_node: the synthesizer returning
-        # the sentinel with status still "running".
+        # the citebound with status still "running".
         reason_code = result.get("refusal_reason") or RefusalReason.INSUFFICIENT_EVIDENCE
         response = RefusalResponse(
             trace_id=trace.trace_id,

@@ -4,7 +4,7 @@
 
 ## Context
 
-Sentinel had one identity per API key and one isolation rule: a chunk is
+Citebound had one identity per API key and one isolation rule: a chunk is
 visible to the user who uploaded it. Enterprises need three more dimensions —
 the organisation (tenant), the roles a document is shared with, and how
 sensitive it is — and they need the rule to hold everywhere a document can

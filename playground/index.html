@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>sentinel-proof playground: check a RAG answer against its sources</title>
+  <title>citebound playground: check a RAG answer against its sources</title>
   <meta name="description" content="Paste the passages your retriever returned and the answer your LLM wrote. See which sentences are supported, which citations were wrong and got re-pointed, and which claims were stripped because their numbers are not in the evidence. Runs entirely in your browser; nothing is uploaded.">
-  <meta property="og:title" content="sentinel-proof playground">
+  <meta property="og:title" content="citebound playground">
   <meta property="og:description" content="Catch RAG hallucinations in the browser: every number and citation checked against the retrieved passages, with no model and no upload.">
   <meta property="og:type" content="website">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f6f5f'/%3E%3Cpath d='M9 17l5 5 9-11' fill='none' stroke='%23fff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
@@ -16,14 +16,14 @@
     <div class="brand">
       <span class="logo" aria-hidden="true"></span>
       <div>
-        <h1>sentinel-proof <span class="muted">playground</span></h1>
-        <p class="tagline">Check a RAG answer against the passages it cites. No model, no upload: the real <code>sentinel-proof</code> package runs in your browser.</p>
+        <h1>citebound <span class="muted">playground</span></h1>
+        <p class="tagline">Check a RAG answer against the passages it cites. No model, no upload: the real <code>citebound</code> package runs in your browser.</p>
       </div>
     </div>
     <nav class="links">
-      <a href="https://pypi.org/project/sentinel-proof/" rel="noopener">PyPI</a>
-      <a href="https://github.com/92kareeem/sentinel-rag/tree/main/packages/sentinel-proof" rel="noopener">GitHub</a>
-      <a href="https://github.com/92kareeem/sentinel-rag/blob/main/packages/sentinel-proof/README.md#faq" rel="noopener">FAQ</a>
+      <a href="https://pypi.org/project/citebound/" rel="noopener">PyPI</a>
+      <a href="https://github.com/92kareeem/citebound/tree/main/packages/citebound" rel="noopener">GitHub</a>
+      <a href="https://github.com/92kareeem/citebound/blob/main/packages/citebound/README.md#faq" rel="noopener">FAQ</a>
     </nav>
   </header>
 
@@ -89,7 +89,7 @@
   </main>
 
   <footer class="foot">
-    <p>Everything runs in this tab through <a href="https://pyodide.org" rel="noopener">Pyodide</a>; your text never leaves the browser. The playground installs the same wheel that is published to PyPI, so a result here is the result <code>pip install sentinel-proof</code> gives. The gate checks numbers and word overlap, not meaning: pair it with a judge model for paraphrase. <a href="https://github.com/92kareeem/sentinel-rag/issues/new?template=gate_wrong_verdict.yml" rel="noopener">Got a wrong verdict? Report it</a> and it becomes a test.</p>
+    <p>Everything runs in this tab through <a href="https://pyodide.org" rel="noopener">Pyodide</a>; your text never leaves the browser. The playground installs the same wheel that is published to PyPI, so a result here is the result <code>pip install citebound</code> gives. The gate checks numbers and word overlap, not meaning: pair it with a judge model for paraphrase. <a href="https://github.com/92kareeem/citebound/issues/new?template=gate_wrong_verdict.yml" rel="noopener">Got a wrong verdict? Report it</a> and it becomes a test.</p>
     <p class="muted" id="version"></p>
   </footer>
 

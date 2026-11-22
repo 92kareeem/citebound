@@ -1,0 +1,92 @@
+[project]
+name = "citebound-mcp"
+version = "0.2.0"
+description = "MCP server that fact-checks an LLM answer against its source passages before the user sees it: every number and citation verified, wrong citations fixed, unsupported sentences removed. Local, deterministic, no API key, no model. For Claude Desktop, Claude Code, Cursor, VS Code and any MCP client."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+keywords = [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "rag",
+    "hallucination",
+    "hallucination-detection",
+    "guardrails",
+    "grounding",
+    "citations",
+    "fact-checking",
+    "claude",
+    "claude-desktop",
+    "claude-code",
+    "cursor",
+    "vscode",
+    "windsurf",
+    "agents",
+    "ai-agents",
+    "agentic-rag",
+    "retrieval-augmented-generation",
+    "llm-guardrails",
+    "answer-verification",
+    "citation-checker",
+    "faithfulness",
+    "trustworthy-ai",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = [
+    "citebound>=0.2.0",
+    "mcp>=2.3,<3",
+    "typing-extensions>=4.6",
+]
+
+[project.urls]
+Homepage = "https://github.com/92kareeem/citebound"
+Documentation = "https://github.com/92kareeem/citebound/tree/main/packages/citebound-mcp"
+Changelog = "https://github.com/92kareeem/citebound/blob/main/packages/citebound-mcp/CHANGELOG.md"
+Issues = "https://github.com/92kareeem/citebound/issues"
+Playground = "https://92kareeem.github.io/citebound/"
+
+[project.scripts]
+citebound-mcp = "citebound_mcp.__main__:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.8", "mypy>=1.13"]
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+citebound_mcp = ["py.typed"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["*.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+strict = true
+python_version = "3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

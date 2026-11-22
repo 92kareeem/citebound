@@ -1,5 +1,5 @@
 {
-  "TableName": "sentinel-documents",
+  "TableName": "citebound-documents",
   "BillingMode": "PAY_PER_REQUEST",
   "KeySchema": [
     { "AttributeName": "pk", "KeyType": "HASH" },
@@ -10,6 +10,6 @@
     { "AttributeName": "sk", "AttributeType": "S" }
   ],
   "Tags": [
-    { "Key": "Project", "Value": "sentinel" }
+    { "Key": "Project", "Value": "citebound" }
   ]
 }

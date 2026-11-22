@@ -84,7 +84,7 @@ def build_eval_report(rows: list[dict[str, Any]], *, top_k: int) -> str:
     repaired = [r for r in rows if r["repairs"] > 0]
 
     report = [
-        "# Sentinel — Eval Report",
+        "# Citebound — Eval Report",
         "",
         f"_{time.strftime('%Y-%m-%d %H:%M')} · {len(rows)} questions · judge: offline_",
         "",

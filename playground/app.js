@@ -1,4 +1,4 @@
-// sentinel-proof playground. Plain JavaScript, no framework, no build step.
+// citebound playground. Plain JavaScript, no framework, no build step.
 // The page is static; the only network requests are the Pyodide runtime from
 // the CDN and the wheel served next to this file. Input text is never sent
 // anywhere: the worker (worker.js) verifies it inside the browser.
@@ -204,7 +204,7 @@
         "This usually means the CDN is blocked on your network. The package itself needs nothing but Python: ",
     );
     const code = document.createElement("code");
-    code.textContent = "pip install sentinel-proof";
+    code.textContent = "pip install citebound";
     frag.append(code, ".");
     return frag;
   }
@@ -230,10 +230,10 @@
       } else if (msg.type === "ready") {
         ready = true;
         setStatus(
-          `Ready. sentinel-proof ${msg.packageVersion} on Python ${msg.pythonVersion} (Pyodide ${msg.pyodideVersion}), running in this tab.`,
+          `Ready. citebound ${msg.packageVersion} on Python ${msg.pythonVersion} (Pyodide ${msg.pyodideVersion}), running in this tab.`,
           "ready",
         );
-        els.version.textContent = `sentinel-proof ${msg.packageVersion} · built ${manifest.built || "locally"}`;
+        els.version.textContent = `citebound ${msg.packageVersion} · built ${manifest.built || "locally"}`;
         scheduleVerify(0);
       } else if (msg.type === "result") {
         if (msg.id !== pendingId) return; // stale
@@ -435,8 +435,8 @@
   function renderCode() {
     const passages = splitPassages(state.passages);
     const lines = [
-      "# pip install sentinel-proof",
-      "from sentinel_proof import passages_from_texts, verify",
+      "# pip install citebound",
+      "from citebound import passages_from_texts, verify",
       "",
       "passages = passages_from_texts([",
       ...passages.map((p) => "    " + pyString(p) + ","),

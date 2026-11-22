@@ -4,7 +4,7 @@
 
 ## Context
 
-Sentinel's graph runs `synthesizer → critic → grounding_check`, with a bounded
+Citebound's graph runs `synthesizer → critic → grounding_check`, with a bounded
 repair loop (`repair_rewrite`, then `repair_escalate`) attached to the failure
 edges of both gates.
 
@@ -37,17 +37,17 @@ first round had already produced correctly.
 Route on the synthesizer's output **before** the critic sees it
 (`_route_after_synthesizer` in `agents/graph.py`):
 
-- answer is not the sentinel → `critic` (unchanged behaviour)
-- sentinel, `attempt == 0`, budget allows → `repair_rewrite`
-- sentinel, otherwise → `refusal`
+- answer is not the citebound → `critic` (unchanged behaviour)
+- citebound, `attempt == 0`, budget allows → `repair_rewrite`
+- citebound, otherwise → `refusal`
 
-Additionally, centralize the sentinel as `is_insufficient_context()` in
+Additionally, centralize the citebound as `is_insufficient_context()` in
 `models/schemas.py`, tolerant of decoration (trailing period, quotes, case,
 an appended citation tag).
 
 ## Alternatives considered
 
-**1. Refuse immediately on the first sentinel, with no repair at all.**
+**1. Refuse immediately on the first citebound, with no repair at all.**
 Rejected. `repair_rewrite` reformulates the query and *re-runs retrieval* —
 "the evidence isn't here" genuinely can mean "retrieval missed it", and a
 second query formulation can recover a real answer. Removing that round would

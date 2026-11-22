@@ -19,7 +19,7 @@ jobs:
         run: |
           pip install ruff mypy pydantic pydantic-settings fastapi mangum httpx \
             boto3 langgraph rank-bm25 numpy python-multipart pytest moto[dynamodb] \
-            ./packages/sentinel-proof
+            ./packages/citebound
       - name: Ruff
         run: ruff check backend
       - name: Mypy
@@ -40,7 +40,7 @@ jobs:
       - name: Install (CPU torch — the tests exercise real embeddings/FAISS)
         run: |
           pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install -e ./packages/sentinel-proof -e ".[dev]"
+          pip install -e ./packages/citebound -e ".[dev]"
       - name: Pytest
         run: pytest backend/tests -q
         env:
@@ -83,7 +83,7 @@ jobs:
       # not be built from a fresh clone at all.
       - name: Build image
         run: |
-          docker build -f docker/Dockerfile.lambda -t sentinel-api:ci .
+          docker build -f docker/Dockerfile.lambda -t citebound-api:ci .
 
       # Building proves the image assembles; it does NOT prove the app starts.
       # A missing python-multipart shipped to production and 502'd every route
@@ -94,9 +94,9 @@ jobs:
       # way Lambda does.
       - name: Container actually starts and serves a request
         run: |
-          docker run -d --name sentinel-ci -p 9000:8080 \
+          docker run -d --name citebound-ci -p 9000:8080 \
             -e LOCAL_MODE=true -e USE_S3_INDEX=false -e INDEX_DIR=/tmp/index \
-            sentinel-api:ci
+            citebound-api:ci
 
           # A Function URL event (payload format 2.0). sourceIp/userAgent are
           # not optional: Mangum reads requestContext.http.sourceIp directly
@@ -117,7 +117,7 @@ jobs:
           done
 
           echo "--- response ---"; cat /tmp/out.json; echo
-          echo "--- container logs ---"; docker logs sentinel-ci
+          echo "--- container logs ---"; docker logs citebound-ci
 
           # Assert on the PARSED payload, not with grep. An import-time crash
           # still returns HTTP 200 from the emulator (with the traceback in the
@@ -136,7 +136,7 @@ jobs:
 
       - name: Clean up
         if: always()
-        run: docker rm -f sentinel-ci || true
+        run: docker rm -f citebound-ci || true
 
   compose:
     name: docker compose up works from a clean clone
@@ -154,7 +154,7 @@ jobs:
       - name: Wait for a healthy API
         run: |
           for i in $(seq 1 60); do
-            s=$(docker inspect -f '{{.State.Health.Status}}' sentinel-api-1 || true)
+            s=$(docker inspect -f '{{.State.Health.Status}}' citebound-api-1 || true)
             [ "$s" = healthy ] && exit 0
             sleep 3
           done
