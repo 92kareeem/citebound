@@ -10,9 +10,9 @@
     "pairs_ok": 0
   },
   "comparison": {
-    "false_accept": 4,
+    "false_accept": 0,
     "false_refuse": 0,
-    "pairs_ok": 0
+    "pairs_ok": 4
   },
   "compound": {
     "false_accept": 3,
@@ -30,9 +30,9 @@
     "pairs_ok": 3
   },
   "modality": {
-    "false_accept": 3,
+    "false_accept": 0,
     "false_refuse": 0,
-    "pairs_ok": 0
+    "pairs_ok": 3
   },
   "multilingual": {
     "false_accept": 0,
@@ -40,9 +40,9 @@
     "pairs_ok": 3
   },
   "negation": {
-    "false_accept": 5,
+    "false_accept": 0,
     "false_refuse": 0,
-    "pairs_ok": 0
+    "pairs_ok": 5
   },
   "number-format": {
     "false_accept": 0,
@@ -50,14 +50,14 @@
     "pairs_ok": 2
   },
   "paraphrase": {
-    "false_accept": 3,
+    "false_accept": 2,
     "false_refuse": 1,
-    "pairs_ok": 0
+    "pairs_ok": 1
   },
   "quantifier": {
-    "false_accept": 3,
+    "false_accept": 2,
     "false_refuse": 0,
-    "pairs_ok": 0
+    "pairs_ok": 1
   },
   "repair": {
     "false_accept": 0,
@@ -70,9 +70,9 @@
     "pairs_ok": 0
   },
   "time-order": {
-    "false_accept": 3,
+    "false_accept": 0,
     "false_refuse": 0,
-    "pairs_ok": 0
+    "pairs_ok": 3
   },
   "unit": {
     "false_accept": 4,

@@ -53,6 +53,24 @@ def test_server_identity_and_instructions() -> None:
     assert instructions and "verify_answer" in instructions and "safe_text" in instructions
 
 
+@pytest.mark.parametrize("negated", [False, True])
+def test_tool_enforces_polarity_with_a_faithful_control(negated: bool) -> None:
+    async def go(c: Client) -> CallToolResult:
+        return await call(
+            c,
+            answer=f"Refunds are {'not ' if negated else ''}permitted after 30 days [1].",
+            passages=["Refunds are not permitted after 30 days."],
+        )
+
+    result = run(go)
+    assert not result.is_error and result.structured_content is not None
+    out = result.structured_content
+    assert out["passed"] is negated
+    assert out["claims"][0]["status"] == ("supported" if negated else "stripped")
+    if not negated:
+        assert out["answer"] == "" and "Refunds are permitted" not in out["safe_text"]
+
+
 def test_tool_is_advertised_with_schema_and_hints() -> None:
     async def go(c: Client) -> Any:
         return (await c.list_tools()).tools

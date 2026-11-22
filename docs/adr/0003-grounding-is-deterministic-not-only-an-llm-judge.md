@@ -9,6 +9,28 @@
 
 ## Context
 
+### Update 2026-11-21
+
+The unreleased package now checks explicit English operator mutations before
+lexical/numeric support and citation repair. Negation, modality, comparison,
+time order and quantifier strengthening are compared only between sentences
+whose normalized content anchors match. Numbers remain anchors. Unrelated
+sentences and section headings cannot supply polarity. Weakening `all` to
+`some` remains allowed; entailment and completeness are different objectives.
+
+A broader 0.6 Dice alignment prototype improved the 104-case development suite
+but added 40 false refusals in a diagnostic over 4,892 good-quality QA training
+responses from RAGTruth. It was rejected. Exact normalized-anchor alignment
+keeps the development improvement (38 -> 21 false accepts, 5 false refusals
+unchanged, 10 -> 27 pairs right) with no decision changes on that diagnostic.
+The latter is a training-split compatibility check with synthetic citations,
+not a held-out accuracy result or a citation benchmark.
+
+This is a bounded mutation guard, not semantic entailment. The remaining
+entity, attribute, unit, compound, paraphrase and source-policy gaps still
+require separate measured changes. A hash receipt can bind evidence bytes to
+a decision, but cannot establish semantic truth or source authenticity by itself.
+
 Sentinel's product claim is that answers are grounded in the user's documents.
 Something has to enforce that claim. The obvious candidate is the LLM critic
 already in the graph, which scores faithfulness and relevance.
@@ -29,8 +51,8 @@ model. For each cited sentence:
    retrieved. An id that was never retrieved is fabricated.
 2. **Content floor** — at least 2 real words, so an answer of bare citation
    tags cannot pass as fully grounded.
-3. **Numeric grounding** — every number in the sentence must appear literally
-   somewhere in the retrieved text.
+3. **Numeric grounding** — every number in the sentence must appear in its
+   supporting cited passages, except numbers echoed from the question.
 4. **Lexical support** — the claim's content words must overlap the cited
    chunk above `MIN_LEXICAL_OVERLAP` (0.25).
 
@@ -78,7 +100,8 @@ combining two chunks, which is most of the product's value.
 ## Consequences
 
 **Guaranteed** (deterministic, no model in the path): a citation always points
-at retrieved text; a number in the answer always appears in retrieved text.
+at retrieved text; a number in the answer appears in supporting cited text or
+in the question (the API's explicit exemption).
 
 **Not guaranteed:** semantic entailment. A sentence that shares vocabulary with
 its chunk and invents no numbers can still misstate what the chunk means.
@@ -94,11 +117,10 @@ product claim.
 Two details in the current implementation exist because their absence caused
 real bugs:
 
-- **Numbers are validated against the whole retrieved context, not just the
-  cited chunk.** Per-sentence citation is imperfect; the model may cite chunk A
-  for a figure living in chunk B, both retrieved. Checking the union avoids
-  punishing a misattributed-but-true claim, while a number in *no* retrieved
-  chunk is still caught.
+- **Numbers are validated against supporting citations.** When the cited group
+  fails, another retrieved passage may repair the citation only if it passes
+  the same support checks. Question numbers are exempted by the existing API;
+  their appearance in the question does not independently establish their truth.
 - **Sentence splitting walks tag-to-tag** rather than matching a
   sentence-shaped regex. A pattern that excluded `.` from the sentence body
   broke on abbreviations, decimals, and back-to-back citations — and an

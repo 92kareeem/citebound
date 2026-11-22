@@ -1,8 +1,9 @@
 # A contrastive benchmark for citation-level grounding
 
-104 cases, 52 contrastive pairs, 16 failure classes. Each pair is two claims
-over the same evidence that differ by as little as one word: one that a
-verifier must reject, and one that it must keep.
+104 cases, 52 paired examples, 16 failure classes. Most pairs contrast a
+claim to reject with a faithful claim to keep. Seven pairs change the evidence
+and one citation-repair pair has two keep labels; these are paired controls,
+not strictly contrastive minimal pairs.
 
 ```bash
 python benchmark/run.py                  # score and write report.md
@@ -20,7 +21,9 @@ also useless. Either one looks excellent on a one-sided metric.
 
 So the headline number here is **pair accuracy**: the share of pairs where the
 verifier rejects the bad half *and* keeps the good half. You cannot buy it with
-caution, and you cannot buy it with permissiveness.
+caution, and you cannot buy a high score with permissiveness. On this version,
+accepting everything scores 1/52 because the repair control has two keep labels;
+rejecting everything scores 0/52.
 
 ## Where `sentinel-proof` stands today
 
@@ -33,6 +36,13 @@ Measured on this set, not on a friendly one. The current report is in
 | False accepts | 38 of 51 |
 | False refusals | 5 of 53 |
 
+The unreleased polarity guard reaches 27/52 pairs (52%), with 21/51 false
+accepts and the same 5/53 false refusals on these unchanged inputs. It checks
+English negation, explicit modality changes, comparison direction, temporal
+order and quantifier strengthening only when normalized content anchors match.
+It deliberately allows universal-to-partial weakening; the two existing
+`quantifier` reject labels for that behavior remain visible as disagreements.
+
 That is a poor score and it is published on purpose. The gate compares bags of
 words and figures, so it cannot see the word that carries the meaning: "not",
 "may", "below", "after", or a name it has never read. Three classes it already
@@ -43,6 +53,26 @@ measured against them instead of argued about.
 **This set is adversarial by construction.** It is not an estimate of how often
 a real RAG answer is wrong, and a score here does not transfer to production
 rates. It measures whether a specific failure mode is detectable at all.
+
+## Interpretation limits before external comparisons
+
+- This is a development regression set, not an independently held-out test.
+  Changes are designed with these cases visible.
+- `all` to `some` and `always` to `sometimes` can preserve entailment while
+  losing completeness. Do not count these as unambiguous hallucinations when
+  comparing entailment classifiers. Version and review revised labels separately;
+  do not silently rewrite the original baseline.
+- Staleness needs an explicit evaluation date and source precedence policy.
+  The current string-only cases do not supply a structured policy.
+- The runner reads the first parsed claim's status. Before adding decomposition,
+  score every claim and the final released text; otherwise a kept first clause
+  can hide a stripped later clause or a whole-answer refusal.
+- Class aggregates can hide one case getting worse while another improves.
+  Add case-level outcomes, input hashes, citation targets and retention metrics
+  before treating this as an external leaderboard.
+- Detector-only and repair-capable systems need separate detection and
+  enforcement tracks. Freeze thresholds on development data, then evaluate an
+  untouched test split grouped by source and template.
 
 ## The case schema
 
@@ -111,6 +141,6 @@ These measure different things and are worth running alongside, not instead:
 over naturally generated text; [PARCEL](https://arxiv.org/html/2610.10971v1)
 does adversarial claim-level work for legal citations;
 [Faithfulness-QA](https://arxiv.org/html/2604.25313v2) supplies entity
-substitution at scale. What none of them covers is a small, dependency-free,
-contrastive set aimed at citation-level verification across these classes,
-which is why this one exists.
+substitution at scale. This suite focuses on small executable regressions for
+citation-level verification across these classes. Its research novelty has not
+been established by a comprehensive literature review.
