@@ -17,6 +17,7 @@ inputs. See README.md for the schema.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from collections import defaultdict
@@ -30,7 +31,9 @@ from sentinel_proof import __version__, passages_from_texts, verify  # noqa: E40
 
 CASES = HERE / "cases.jsonl"
 BASELINE = HERE / "baseline.json"
+CASE_BASELINE = HERE / "case-baseline.json"
 REPORT = HERE / "report.md"
+SCORER = "first-claim-status-v1"
 
 KEPT = {"supported", "repaired"}
 COUNTERS = ("reject", "keep", "false_accept", "false_refuse", "pairs", "pairs_ok")
@@ -38,7 +41,96 @@ COUNTERS = ("reject", "keep", "false_accept", "false_refuse", "pairs", "pairs_ok
 
 def load() -> list[dict]:
     with CASES.open(encoding="utf-8") as fh:
-        return [json.loads(line) for line in fh if line.strip()]
+        cases = [json.loads(line) for line in fh if line.strip()]
+    validate_cases(cases)
+    return cases
+
+
+def validate_cases(cases: list[dict]) -> None:
+    """Fail before scoring when identities, labels or pair membership are ambiguous."""
+    if not cases:
+        raise ValueError("case set must not be empty")
+    by_id = {}
+    for case in cases:
+        if not isinstance(case, dict):
+            raise ValueError("each case must be an object")
+        for field in ("id", "pair", "class", "answer", "why"):
+            if not isinstance(case.get(field), str) or not case[field].strip():
+                raise ValueError(f"case requires a nonempty string: {field}")
+        cid = case["id"]
+        if cid in by_id:
+            raise ValueError(f"duplicate case id: {cid}")
+        if case.get("expect") not in ("keep", "reject"):
+            raise ValueError(f"{cid}: expect must be keep or reject")
+        passages = case.get("passages")
+        if not isinstance(passages, list) or not all(isinstance(p, str) for p in passages):
+            raise ValueError(f"{cid}: passages must be a list of strings")
+        if not isinstance(case.get("question", ""), str):
+            raise ValueError(f"{cid}: question must be a string")
+        if case.get("citation_style", "numeric") not in ("numeric", "tag"):
+            raise ValueError(f"{cid}: unsupported citation_style")
+        by_id[cid] = case
+    for cid, case in by_id.items():
+        twin = by_id.get(case["pair"])
+        if twin is None or twin is case or twin["pair"] != cid:
+            raise ValueError(f"{cid}: pair must reference a distinct reciprocal case")
+        if twin["class"] != case["class"]:
+            raise ValueError(f"{cid}: pair must belong to the same class")
+
+
+def case_snapshot(cases: list[dict], results: list[dict]) -> dict:
+    """Pin canonical case content separately from its measured outcome."""
+    by_id = {row["id"]: row for row in results}
+    return {
+        "schema_version": 1,
+        "scorer": SCORER,
+        "cases": {
+            case["id"]: {
+                "sha256": hashlib.sha256(
+                    json.dumps(
+                        case, sort_keys=True, ensure_ascii=False, separators=(",", ":")
+                    ).encode("utf-8")
+                ).hexdigest(),
+                "correct": by_id[case["id"]]["correct"],
+            }
+            for case in cases
+        },
+    }
+
+
+def case_regressions(old: dict, current: dict) -> list[str]:
+    """Improvements cannot cancel a previously correct case becoming wrong."""
+    if (
+        not isinstance(old, dict)
+        or old.get("schema_version") != 1
+        or old.get("scorer") != SCORER
+        or not isinstance(old.get("cases"), dict)
+        or not old["cases"]
+    ):
+        return ["invalid or incompatible case baseline; review before updating"]
+    problems = []
+    previous = old["cases"]
+    measured = current["cases"]
+    for cid in sorted(previous.keys() - measured.keys()):
+        problems.append(f"{cid}: case removed")
+    for cid in sorted(measured.keys() - previous.keys()):
+        problems.append(f"{cid}: new case requires a reviewed baseline update")
+    for cid in sorted(previous.keys() & measured.keys()):
+        want, got = previous[cid], measured[cid]
+        if (
+            not isinstance(want, dict)
+            or type(want.get("correct")) is not bool
+            or not isinstance(want.get("sha256"), str)
+            or len(want["sha256"]) != 64
+            or any(c not in "0123456789abcdef" for c in want["sha256"])
+        ):
+            problems.append(f"{cid}: invalid case baseline entry")
+            continue
+        if want["sha256"] != got["sha256"]:
+            problems.append(f"{cid}: case content changed; review inputs and labels")
+        if want["correct"] and not got["correct"]:
+            problems.append(f"{cid}: previously correct case now wrong")
+    return problems
 
 
 def run_case(case: dict) -> tuple[bool, str]:
@@ -56,6 +148,7 @@ def run_case(case: dict) -> tuple[bool, str]:
 
 
 def score(cases: list[dict]) -> tuple[dict, list[dict]]:
+    validate_cases(cases)
     per_class: dict[str, dict[str, int]] = defaultdict(lambda: dict.fromkeys(COUNTERS, 0))
     results = []
     for case in cases:
@@ -138,11 +231,15 @@ def write_report(per_class: dict, results: list[dict], total: dict) -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--check", action="store_true", help="fail if any class regressed")
-    ap.add_argument("--update-baseline", action="store_true")
+    mode = ap.add_mutually_exclusive_group()
+    mode.add_argument("--check", action="store_true", help="check class and case regressions")
+    mode.add_argument("--update-baseline", action="store_true")
     args = ap.parse_args()
 
-    cases = load()
+    try:
+        cases = load()
+    except (ValueError, OSError) as exc:
+        ap.error(str(exc))
     per_class, results = score(cases)
     total = totals(per_class)
     write_report(per_class, results, total)
@@ -167,17 +264,26 @@ def main() -> int:
         name: {k: b[k] for k in ("false_accept", "false_refuse", "pairs_ok")}
         for name, b in per_class.items()
     }
+    case_state = case_snapshot(cases, results)
     if args.update_baseline:
         BASELINE.write_text(json.dumps(snapshot, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        print(f"baseline updated: {BASELINE.name}")
+        CASE_BASELINE.write_text(
+            json.dumps(case_state, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        print(f"baselines updated: {BASELINE.name}, {CASE_BASELINE.name}")
         return 0
 
     if args.check:
-        if not BASELINE.exists():
-            print("no baseline to check against; run --update-baseline first")
+        if not BASELINE.exists() or not CASE_BASELINE.exists():
+            print("missing class or case baseline; review and run --update-baseline first")
             return 1
-        old = json.loads(BASELINE.read_text(encoding="utf-8"))
-        regressions = []
+        try:
+            old = json.loads(BASELINE.read_text(encoding="utf-8"))
+            old_cases = json.loads(CASE_BASELINE.read_text(encoding="utf-8"))
+        except (ValueError, OSError) as exc:
+            print(f"cannot read baselines: {exc}")
+            return 1
+        regressions = case_regressions(old_cases, case_state)
         for name, want in old.items():
             got = snapshot.get(name)
             if got is None:
@@ -194,11 +300,11 @@ def main() -> int:
             if got["pairs_ok"] < want["pairs_ok"]:
                 regressions.append(f"{name}: pairs right {want['pairs_ok']} -> {got['pairs_ok']}")
         if regressions:
-            print("\nREGRESSION against baseline.json:")
+            print("\nREGRESSION against benchmark baselines:")
             for line in regressions:
                 print(f"  {line}")
             return 1
-        print("no regression against baseline.json")
+        print("no regression against class or case baselines")
     return 0
 
 
