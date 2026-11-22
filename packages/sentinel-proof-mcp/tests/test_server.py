@@ -191,6 +191,21 @@ def test_max_stripped_ratio_is_honoured() -> None:
     assert out["ok"] is False and "limit 20%" in out["summary"]
 
 
+def test_no_surviving_claims_are_refused_even_at_limit_one() -> None:
+    async def go(c: Client) -> CallToolResult:
+        return await call(
+            c, answer="Refunds take 90 days [1].", passages=PASSAGES, max_stripped_ratio=1
+        )
+
+    result = run(go)
+    assert not result.is_error
+    out = result.structured_content
+    assert out is not None and out["ok"] is False and out["passed"] is False
+    assert out["answer"] == "" and out["refusal"] == "UNVERIFIABLE_ANSWER"
+    assert out["safe_text"] and "90" not in out["safe_text"]
+    assert out["summary"].startswith("Refused:")
+
+
 @pytest.mark.parametrize(
     ("arguments", "fragment"),
     [

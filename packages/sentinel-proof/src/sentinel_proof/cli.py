@@ -41,7 +41,7 @@ def _load_passages(path: Path) -> list[Passage]:
     return _with_ids(out)
 
 
-def _print_human(v: Verdict) -> None:
+def _print_human(v: Verdict, max_stripped_ratio: float) -> None:
     if v.is_refusal:
         print("REFUSED by the model: the evidence does not answer the question.")
         return
@@ -49,7 +49,7 @@ def _print_human(v: Verdict) -> None:
     print(
         f"{label}: {len(v.claims) - len(v.stripped)}/{len(v.claims)} claims supported, "
         f"{v.repaired_citations} citation(s) repaired, "
-        f"{v.stripped_ratio:.0%} stripped (limit {MAX_STRIPPED_RATIO:.0%})"
+        f"{v.stripped_ratio:.0%} stripped (limit {max_stripped_ratio:.0%})"
     )
     for c in v.claims:
         mark = {"supported": "+", "repaired": "~", "stripped": "-"}[str(c.status)]
@@ -88,17 +88,20 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
     answer = args.answer.read_text(encoding="utf-8") if args.answer else sys.stdin.read()
-    verdict = verify(
-        answer,
-        _load_passages(args.passages),
-        args.question,
-        citation_style="numeric" if args.numeric else "tag",
-        max_stripped_ratio=args.max_stripped,
-    )
+    try:
+        verdict = verify(
+            answer,
+            _load_passages(args.passages),
+            args.question,
+            citation_style="numeric" if args.numeric else "tag",
+            max_stripped_ratio=args.max_stripped,
+        )
+    except ValueError as exc:
+        check.error(str(exc))
     if args.json:
         print(json.dumps(verdict.to_dict(), indent=2))
     else:
-        _print_human(verdict)
+        _print_human(verdict, args.max_stripped)
     return 0 if verdict.passed else 1
 
 
