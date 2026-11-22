@@ -7,11 +7,34 @@ not strictly contrastive minimal pairs.
 
 ```bash
 python benchmark/run.py                  # score and write report.md
-python benchmark/run.py --check          # fail if any class got worse
+python benchmark/run.py --check          # fail if any class or pinned case got worse
 python benchmark/run.py --update-baseline
 ```
 
 No dependencies, no model, no network. It runs in under a second.
+
+## Regression checks and reproducibility
+
+`--check` compares both the historical class totals in `baseline.json` and
+individual outcomes in `case-baseline.json`. A previously correct case becoming
+wrong fails even if an improvement elsewhere leaves its class totals unchanged.
+Existing failures may stay unchanged or improve. Improvements become protected
+when the reviewed baseline is updated; an ordinary check never updates it.
+
+The case baseline records schema version 1, scorer `first-claim-status-v1`, and
+SHA-256 of each complete case object serialized as sorted-key, compact UTF-8 JSON
+with non-ASCII characters preserved. This pins inputs, labels, pair membership
+and rationale, but ignores JSON whitespace, object key order and case order.
+Changes to case content, additions and removals fail until explicitly reviewed.
+Hashes detect changes relative to the checked-in baseline; they do not establish
+label correctness or external authenticity.
+
+`--update-baseline` deliberately updates **both** baseline files. Review their
+diffs alongside the code and report; never use it simply to make CI green.
+It cannot be combined with `--check`. Dataset validation rejects duplicate IDs,
+invalid labels and missing, nonreciprocal or cross-class pairs before scoring.
+Two-keep citation-repair controls remain valid. No labels or verifier behavior
+were changed by introducing these checks.
 
 ## Why pairs
 
@@ -67,9 +90,9 @@ rates. It measures whether a specific failure mode is detectable at all.
 - The runner reads the first parsed claim's status. Before adding decomposition,
   score every claim and the final released text; otherwise a kept first clause
   can hide a stripped later clause or a whole-answer refusal.
-- Class aggregates can hide one case getting worse while another improves.
-  Add case-level outcomes, input hashes, citation targets and retention metrics
-  before treating this as an external leaderboard.
+- Individual correctness and input hashes are now pinned, preventing class
+  totals from hiding regressions. Citation targets, final-output scoring and
+  retention metrics still need implementation before an external leaderboard.
 - Detector-only and repair-capable systems need separate detection and
   enforcement tracks. Freeze thresholds on development data, then evaluate an
   untouched test split grouped by source and template.
@@ -129,7 +152,8 @@ threshold on a held-out split and say which threshold you used.
 
 Add both halves of the pair, keep the difference between them as small as the
 failure allows, then run `--update-baseline` in the same commit as the change
-that justifies it. A new class needs at least two pairs.
+that justifies it. Review both baseline files and the report. A new class needs
+at least two pairs.
 
 Good cases come from real failures. If a user reports an answer that should
 have been refused, reduce it to a minimal pair and add it here.
