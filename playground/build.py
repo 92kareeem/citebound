@@ -1,6 +1,6 @@
 """Assemble the playground into ``playground/dist``.
 
-The playground is static files plus the sentinel-proof wheel built from this
+The playground is static files plus the citebound wheel built from this
 checkout, so what the page runs is exactly the code in the repository. Run:
 
     python playground/build.py            # writes playground/dist
@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-PACKAGE = ROOT / "packages" / "sentinel-proof"
+PACKAGE = ROOT / "packages" / "citebound"
 HERE = Path(__file__).resolve().parent
 DIST = HERE / "dist"
 STATIC = ("index.html", "style.css", "app.js", "worker.js")
@@ -41,7 +41,7 @@ def build_wheel(out: Path) -> Path:
     )
     # setuptools leaves a build/ tree inside the package; it is not source.
     shutil.rmtree(PACKAGE / "build", ignore_errors=True)
-    wheels = sorted(out.glob("sentinel_proof-*.whl"))
+    wheels = sorted(out.glob("citebound-*.whl"))
     if len(wheels) != 1:
         raise SystemExit(f"expected exactly one wheel in {out}, found {wheels}")
     return wheels[0]
@@ -73,7 +73,7 @@ def main() -> int:
     # GitHub Pages would otherwise run Jekyll over the output.
     (DIST / ".nojekyll").write_text("", encoding="utf-8")
 
-    print(f"playground built: {DIST} (sentinel-proof {version}, {wheel.name})")
+    print(f"playground built: {DIST} (citebound {version}, {wheel.name})")
     return 0
 
 

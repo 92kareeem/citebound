@@ -6,7 +6,7 @@
       "Effect": "Allow",
       "Principal": { "Service": "cloudfront.amazonaws.com" },
       "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3:::sentinel-frontend-440744255230/*",
+      "Resource": "arn:aws:s3:::citebound-frontend-440744255230/*",
       "Condition": {
         "StringEquals": {
           "AWS:SourceArn": "arn:aws:cloudfront::440744255230:distribution/E4PGCITAJNI5Q"

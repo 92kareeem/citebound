@@ -1,11 +1,11 @@
-# Load testing Sentinel
+# Load testing Citebound
 
 A JMeter test plan, a stand-in model, and two scripts: one drives the load,
 one turns the results into the report in [`docs/benchmarks/`](../docs/benchmarks/).
 
 ## What is measured, and what is not
 
-Sentinel's own cost per request: authentication, the guardrails, query
+Citebound's own cost per request: authentication, the guardrails, query
 embedding, access-filtered hybrid retrieval, the LangGraph agent, the
 deterministic grounding gate, the verified-answer cache, and the transport.
 
@@ -13,9 +13,9 @@ The model is **not** measured. A hosted model's free tier allows about 30
 requests a minute, so a load test pointed at one measures the provider's rate
 limiter. [`mock_llm.py`](mock_llm.py) answers in the OpenAI wire format with a
 fixed latency (300 ms by default, a typical small hosted model) and with
-answers good enough to pass Sentinel's real critic and grounding gate: it
+answers good enough to pass Citebound's real critic and grounding gate: it
 quotes the top retrieved passage verbatim with its citation tag. Nothing in
-Sentinel is mocked; only the network hop to a model is replaced.
+Citebound is mocked; only the network hop to a model is replaced.
 
 Do not point this at AWS. At these rates the Lambda free tier (1M requests a
 month) lasts minutes, and new accounts are capped at 10 concurrent executions.
@@ -40,7 +40,7 @@ month) lasts minutes, and new accounts are capped at 10 concurrent executions.
   that fails: more than 1% errors, or less than 90% of the offered rate
   delivered. That failing step is reported too: where it breaks is the result.
 - **One API process, 2 CPUs.** The API container is capped at 2 CPUs and runs
-  one uvicorn worker, so a result is per-instance capacity. Sentinel scales
+  one uvicorn worker, so a result is per-instance capacity. Citebound scales
   out by instance (Lambda runs one request per instance; containers scale
   horizontally). Local mode keeps the cache and quota counters in process
   memory, so it is deliberately not run with several workers.

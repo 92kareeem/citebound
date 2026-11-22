@@ -133,7 +133,7 @@ export default function App() {
         .then((t) => setTraces((prev) => ({ ...prev, [r.trace_id]: t })))
         .catch(() => {});
     } catch (e) {
-      let text = "Sentinel couldn't reach the server. Please try again.";
+      let text = "Citebound couldn't reach the server. Please try again.";
       if (e instanceof ApiError && e.status === 429) {
         text = `Daily demo quota reached — resets ${
           e.retryAfter ? `in ~${Math.ceil(Number(e.retryAfter) / 3600)}h` : "at midnight UTC"

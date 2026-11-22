@@ -1,4 +1,4 @@
-# Sentinel task runner.
+# Citebound task runner.
 #
 #   make up        the whole stack in docker (no Python, Node or AWS needed)
 #   make dev       backend + frontend on your machine, hot reload
@@ -25,7 +25,7 @@ help:
 
 up:
 	docker compose up --build -d
-	@echo "Sentinel: http://localhost:5173   API: http://localhost:8000/docs"
+	@echo "Citebound: http://localhost:5173   API: http://localhost:8000/docs"
 
 down:
 	docker compose down
@@ -46,7 +46,7 @@ venv:
 
 install: venv
 	$(PY) -m pip install --upgrade pip
-	$(PY) -m pip install -e ./packages/sentinel-proof -e ".[dev]"
+	$(PY) -m pip install -e ./packages/citebound -e ".[dev]"
 	cd frontend && npm ci
 
 # Build FAISS + BM25 + chunks.jsonl from ./corpus into ./index.

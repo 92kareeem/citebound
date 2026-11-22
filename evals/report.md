@@ -1,4 +1,4 @@
-# Sentinel — Eval Report
+# Citebound — Eval Report
 
 _2026-09-30 17:04 · 20 questions · judge: openai/gpt-oss-20b_
 

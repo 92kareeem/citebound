@@ -9,7 +9,7 @@ deterministic grounding gate, and sometimes a repair round. Users read a
 silent spinner as "broken". The standard fix is token streaming — show the
 answer as the model writes it.
 
-For Sentinel that fix is the bug ADR 0005 exists to prevent. The text a model
+For Citebound that fix is the bug ADR 0005 exists to prevent. The text a model
 writes is a *draft* until the critic and the grounding gate have passed it.
 Streaming it means showing readers, live, exactly the text the system may be
 about to refuse — and a refused draft, once read, has done its damage: a

@@ -216,7 +216,7 @@ def run_item(graph, item: dict) -> dict:
 
     # Same helper the API uses, so the harness and production agree on what
     # counts as a refusal. A strict `== "INSUFFICIENT_CONTEXT"` here would miss
-    # a decorated sentinel that the API correctly treats as a refusal, and the
+    # a decorated citebound that the API correctly treats as a refusal, and the
     # refusal-rate metric would silently disagree with the shipped behaviour.
     refused = result["status"] == "refused" or is_insufficient_context(result["answer"])
     retrieved_ids = {_normalize_chunk_id(c.chunk_id) for c in result["retrieved"]}
@@ -306,7 +306,7 @@ def _run(graph, item: dict) -> dict:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Sentinel eval runner")
+    parser = argparse.ArgumentParser(description="Citebound eval runner")
     parser.add_argument(
         "--regressions-only", action="store_true",
         help="run only the regression suite (skips the golden-set averages)",
@@ -404,7 +404,7 @@ def main() -> None:
         # record of the last FULL run; a partial run written over it would
         # erase the golden-set numbers while you were only re-checking one
         # fix — found by doing exactly that during end-to-end testing.
-        text = "# Sentinel — Regression Report\n\n" + "\n".join(regression_report)
+        text = "# Citebound — Regression Report\n\n" + "\n".join(regression_report)
         if args.report:
             args.report.write_text(text, encoding="utf-8")
             print(f"\nreport written: {args.report}")
@@ -428,7 +428,7 @@ def main() -> None:
     repaired = [r for r in rows if r["repairs"] > 0]
 
     report = [
-        "# Sentinel — Eval Report", "",
+        "# Citebound — Eval Report", "",
         f"_{time.strftime('%Y-%m-%d %H:%M')} · {len(rows)} questions · judge: {JUDGE_MODEL}_", "",
         "| Metric | Value | Gate |", "|---|---|---|",
         f"| Mean faithfulness (vs retrieved context) | **{mean_faith:.3f}** | "

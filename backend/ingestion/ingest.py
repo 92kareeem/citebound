@@ -123,7 +123,7 @@ def smoke(query: str) -> None:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Build or smoke-test the Sentinel index")
+    ap = argparse.ArgumentParser(description="Build or smoke-test the Citebound index")
     ap.add_argument("folder", nargs="?", default="./corpus", help="business documents to index")
     ap.add_argument("--smoke-only", metavar="QUERY", help="skip build; query existing index")
     args = ap.parse_args()

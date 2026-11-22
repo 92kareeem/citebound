@@ -16,7 +16,7 @@ from app.guardrails.grounding import normalize_citations
 from app.models.schemas import Chunk, Citation
 
 _SYSTEM_PROMPT = (
-    "You are Sentinel, a document Q&A assistant.\n"
+    "You are Citebound, a document Q&A assistant.\n"
     "\n"
     "Answer ONLY using the text inside the DOCUMENT EVIDENCE section. Every "
     "sentence you write must end with a citation tag like [chunk:<chunk_id>] "

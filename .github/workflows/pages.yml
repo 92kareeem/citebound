@@ -1,7 +1,7 @@
 name: playground
 
-# The browser playground at https://92kareeem.github.io/sentinel-rag/ runs the
-# sentinel-proof wheel built from this checkout inside Pyodide. Every pull
+# The browser playground at https://92kareeem.github.io/citebound/ runs the
+# citebound wheel built from this checkout inside Pyodide. Every pull
 # request that touches it is built and exercised in a real browser; main is
 # deployed to GitHub Pages.
 
@@ -10,12 +10,12 @@ on:
     branches: [main]
     paths:
       - "playground/**"
-      - "packages/sentinel-proof/**"
+      - "packages/citebound/**"
       - ".github/workflows/pages.yml"
   pull_request:
     paths:
       - "playground/**"
-      - "packages/sentinel-proof/**"
+      - "packages/citebound/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 

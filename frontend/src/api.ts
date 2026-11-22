@@ -43,7 +43,7 @@ export const LOCAL_IDENTITIES = [
   { key: "globex-local", label: "Other company", detail: "globex · employee · INTERNAL" },
 ] as const;
 
-const KEY_STORAGE = "sentinel-api-key";
+const KEY_STORAGE = "citebound-api-key";
 
 function storedKey(): string | null {
   try {

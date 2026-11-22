@@ -3,7 +3,7 @@
 **Status:** Accepted · **Date:** 2026-09-05 (documents pre-existing design)
 
 > **2026-11-15:** the gate now lives in the standalone, dependency-free
-> `sentinel-proof` package (`packages/sentinel-proof`, Apache-2.0).
+> `citebound` package (`packages/citebound`, Apache-2.0).
 > `guardrails/grounding.py` is the platform's adapter over it. Every rule and
 > test described below moved with it; the decision is unchanged.
 
@@ -31,7 +31,7 @@ entity, attribute, unit, compound, paraphrase and source-policy gaps still
 require separate measured changes. A hash receipt can bind evidence bytes to
 a decision, but cannot establish semantic truth or source authenticity by itself.
 
-Sentinel's product claim is that answers are grounded in the user's documents.
+Citebound's product claim is that answers are grounded in the user's documents.
 Something has to enforce that claim. The obvious candidate is the LLM critic
 already in the graph, which scores faithfulness and relevance.
 
@@ -106,7 +106,7 @@ in the question (the API's explicit exemption).
 **Not guaranteed:** semantic entailment. A sentence that shares vocabulary with
 its chunk and invents no numbers can still misstate what the chunk means.
 
-This limit is documented in `docs/SENTINEL_SYSTEM_GUIDE.md` §6.5 and in the
+This limit is documented in `docs/CITEBOUND_SYSTEM_GUIDE.md` §6.5 and in the
 README rather than glossed over, because a system whose guarantees are
 precisely scoped is more trustworthy than one whose guarantees are
 overstated — and overstating this particular one would undermine the entire

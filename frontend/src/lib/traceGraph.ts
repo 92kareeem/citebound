@@ -2,7 +2,7 @@
 // one lane per attempt, each lane the nodes that ran in it, and the repair
 // that led from one lane to the next.
 //
-// The graph's repair loop is what makes Sentinel self-healing, and a flat
+// The graph's repair loop is what makes Citebound self-healing, and a flat
 // list of eleven step names hides it. Lanes make it visible: attempt 1 ran
 // the pipeline and failed grounding, a rewrite started attempt 2, and so on.
 

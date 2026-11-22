@@ -7,7 +7,7 @@
 set -eu
 
 if [ ! -f "${INDEX_DIR}/current.json" ]; then
-  echo "sentinel: no index in ${INDEX_DIR}; indexing /app/corpus (first start only)"
+  echo "citebound: no index in ${INDEX_DIR}; indexing /app/corpus (first start only)"
   python -m ingestion.ingest /app/corpus
 fi
 

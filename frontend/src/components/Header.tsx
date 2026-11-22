@@ -41,7 +41,7 @@ export function Header({
           S
         </span>
         {/* The page's one h1. */}
-        <h1 className="brand-name">Sentinel</h1>
+        <h1 className="brand-name">Citebound</h1>
         <span className="brand-tag">Verified answers from your documents</span>
       </div>
 

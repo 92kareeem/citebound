@@ -1,5 +1,5 @@
 {
-  "TableName": "sentinel-users",
+  "TableName": "citebound-users",
   "BillingMode": "PAY_PER_REQUEST",
   "AttributeDefinitions": [
     { "AttributeName": "user_id", "AttributeType": "S" },
@@ -13,5 +13,5 @@
       "Projection": { "ProjectionType": "ALL" }
     }
   ],
-  "Tags": [{ "Key": "Project", "Value": "sentinel" }]
+  "Tags": [{ "Key": "Project", "Value": "citebound" }]
 }

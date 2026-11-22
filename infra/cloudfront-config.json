@@ -1,6 +1,6 @@
 {
-  "CallerReference": "sentinel-frontend-2026-07-16",
-  "Comment": "sentinel-frontend",
+  "CallerReference": "citebound-frontend-2026-07-16",
+  "Comment": "citebound-frontend",
   "Enabled": true,
   "DefaultRootObject": "index.html",
   "Origins": {
@@ -8,7 +8,7 @@
     "Items": [
       {
         "Id": "s3-frontend",
-        "DomainName": "sentinel-frontend-440744255230.s3.ap-south-1.amazonaws.com",
+        "DomainName": "citebound-frontend-440744255230.s3.ap-south-1.amazonaws.com",
         "OriginAccessControlId": "E10VPLD7DAOXNI",
         "S3OriginConfig": { "OriginAccessIdentity": "" }
       }

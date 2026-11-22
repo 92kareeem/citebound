@@ -1,7 +1,7 @@
-"""Seed the admin and demo users into sentinel-users.
+"""Seed the admin and demo users into citebound-users.
 
 Run once after the tables exist:
-    C:\\venvs\\sentinel\\Scripts\\python.exe infra\\seed_users.py
+    C:\\venvs\\citebound\\Scripts\\python.exe infra\\seed_users.py
 
 Generates two API keys, stores ONLY their sha256 hashes in DynamoDB, and
 prints the plaintext keys exactly once — copy them somewhere safe (the demo
@@ -16,7 +16,7 @@ from datetime import UTC, datetime
 import boto3
 
 REGION = "ap-south-1"
-TABLE = "sentinel-users"
+TABLE = "citebound-users"
 
 # tenant_id, roles and clearance drive document visibility (see
 # backend/app/guardrails/access.py). Both seeded users share one tenant so the
@@ -47,7 +47,7 @@ def main() -> None:
         }
         table.put_item(Item=item)
         print(f"  {user['user_id']:<6} API key: {key}")
-    print("\nDone. Verify: aws dynamodb scan --table-name sentinel-users --select COUNT")
+    print("\nDone. Verify: aws dynamodb scan --table-name citebound-users --select COUNT")
 
 
 if __name__ == "__main__":

@@ -1,13 +1,13 @@
 """A stand-in LLM for load tests: OpenAI chat-completions wire format, fixed latency.
 
 Why it exists: a load test pointed at a hosted model measures the provider's
-rate limiter (Groq's free tier allows ~30 requests a minute), not Sentinel.
+rate limiter (Groq's free tier allows ~30 requests a minute), not Citebound.
 This server answers like a fast hosted model, with configurable latency, so
-the benchmark isolates what Sentinel itself costs: auth, guardrails, embedding,
+the benchmark isolates what Citebound itself costs: auth, guardrails, embedding,
 access-filtered hybrid retrieval, the agent graph, the grounding gate, the
 cache and the transport.
 
-It answers well enough to pass Sentinel's real gates, which is the point —
+It answers well enough to pass Citebound's real gates, which is the point —
 a stub that produced refusals would benchmark the refusal path only:
 
   synthesizer  quotes the first prose sentences of the top retrieved passage,
@@ -16,7 +16,7 @@ a stub that produced refusals would benchmark the refusal path only:
   critic       (the only json_mode caller) returns a passing verdict
   anything     else, e.g. the repair rewrite, echoes the user's message
 
-Nothing about Sentinel is mocked: only the network hop to a model is replaced.
+Nothing about Citebound is mocked: only the network hop to a model is replaced.
 
 Run:  uvicorn mock_llm:app --port 9000
 Env:  MOCK_LATENCY_MS  mean per-call latency (default 300, a typical hosted

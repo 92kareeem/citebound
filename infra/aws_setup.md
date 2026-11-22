@@ -1,6 +1,6 @@
-# Sentinel — AWS setup log
+# Citebound — AWS setup log
 
-Account: 440744255230 · Region: ap-south-1 · All resources tagged Project=sentinel.
+Account: 440744255230 · Region: ap-south-1 · All resources tagged Project=citebound.
 Every step recorded here as it is executed (P4 teaching contract).
 
 ## Step 0-1 — 2026-07-10
@@ -8,8 +8,8 @@ Every step recorded here as it is executed (P4 teaching contract).
 - LEARNING: human CLI user = broad+temporary; Lambda execution role = narrow+permanent.
 
 ## Step 2 — S3 buckets — DONE 2026-07-10
-- `sentinel-docs-440744255230` — prefixes: uploads/{user_id}/, keep/, index/. Public access blocked. Lifecycle: uploads/ expires after 90 days (infra/s3-lifecycle.json).
-- `sentinel-frontend-440744255230` — static site, private, served only via CloudFront OAC (Step 8).
+- `citebound-docs-440744255230` — prefixes: uploads/{user_id}/, keep/, index/. Public access blocked. Lifecycle: uploads/ expires after 90 days (infra/s3-lifecycle.json).
+- `citebound-frontend-440744255230` — static site, private, served only via CloudFront OAC (Step 8).
 
 ## Step 3 — DynamoDB — DONE 2026-07-11
 - 3 tables created from infra/ddb-*.json (on-demand). TTL ENABLED on traces.ttl + quotas.ttl.
@@ -17,11 +17,11 @@ Every step recorded here as it is executed (P4 teaching contract).
 - LEARNING: quota check is one conditional UpdateItem — the write IS the check, race-free by design.
 
 ## Step 4b — ECR + image — DONE 2026-07-15
-- Repo sentinel-api. Image built from docker/Dockerfile.lambda (no torch; ONNX MiniLM). Compressed 297 MB (< 500 MB free tier).
+- Repo citebound-api. Image built from docker/Dockerfile.lambda (no torch; ONNX MiniLM). Compressed 297 MB (< 500 MB free tier).
 - GOTCHA: Docker 29 pushes OCI index + provenance attestations; Lambda rejects them ("image manifest... not supported"). Fix: `docker buildx build --provenance=false --sbom=false ... --push`.
 
 ## Step 4c — Lambda + Function URL — DONE 2026-07-15
-- Function sentinel-api: image package, 2048 MB, 30s, role sentinel-lambda-role, env GROQ_API_KEY + S3_BUCKET_DOCS (rest baked in image).
+- Function citebound-api: image package, 2048 MB, 30s, role citebound-lambda-role, env GROQ_API_KEY + S3_BUCKET_DOCS (rest baked in image).
 - Function URL (auth NONE): https://chlc5xtu67wbi2i3gfceyas5zy0etude.lambda-url.ap-south-1.on.aws/
 - GOTCHA (Oct 2025 change): NONE-auth URLs need TWO resource policy statements — lambda:InvokeFunctionUrl (FunctionUrlAuthType=NONE) AND lambda:InvokeFunction (InvokedViaFunctionUrl=true). With only the first, every request gets AWS-level "Forbidden".
 - Smoke test PASSED: /healthz 200; /v1/query returned cited table answer (India 2%), critic 1.0/1.0, trace_id issued; bad key -> 401 from app.
@@ -34,8 +34,8 @@ Every step recorded here as it is executed (P4 teaching contract).
 - Design: presigned POST (not PUT) enforces 5MB via content-length-range; index endpoint takes filename as query param so no s3:ListBucket needed; merge reuses old vectors via faiss reconstruct_n, idempotent by doc_id; retriever.reset_cache() after merge so warm Lambda serves new doc.
 
 ## Step 4a — index upload + Lambda execution role — DONE 2026-07-11
-- index/ artifacts uploaded to s3://sentinel-docs-440744255230/index/ (bm25.pkl, chunks.jsonl, faiss.index).
-- Role `sentinel-lambda-role` (trust: lambda.amazonaws.com) + inline `sentinel-lambda-policy` (infra/iam/lambda-policy.json): S3 Get/Put on docs bucket objects, 5 DynamoDB actions on 3 tables + 2 GSIs, logs scoped to /aws/lambda/sentinel-api. No resource wildcards.
+- index/ artifacts uploaded to s3://citebound-docs-440744255230/index/ (bm25.pkl, chunks.jsonl, faiss.index).
+- Role `citebound-lambda-role` (trust: lambda.amazonaws.com) + inline `citebound-lambda-policy` (infra/iam/lambda-policy.json): S3 Get/Put on docs bucket objects, 5 DynamoDB actions on 3 tables + 2 GSIs, logs scoped to /aws/lambda/citebound-api. No resource wildcards.
 
 ## Production-readiness rework — 2026-08-25
 
@@ -45,7 +45,7 @@ Reproducibility and correctness changes that affect deployment:
   "deploy" was an unreviewable sequence of manual CLI steps. The script is idempotent
   and covers buckets, tables, IAM, ECR, image, Lambda, function URL, index sync and a
   smoke test.
-- **New table `sentinel-documents`** (`infra/ddb-documents.json`), PK=`USER#<owner>`
+- **New table `citebound-documents`** (`infra/ddb-documents.json`), PK=`USER#<owner>`
   SK=`DOC#<document_id>` — the document registry. Added to the Lambda IAM policy.
   Without it, AWS mode has nowhere to record document identity/ownership/lifecycle.
 - **The image builds from a clean checkout.** `Dockerfile.lambda` previously did

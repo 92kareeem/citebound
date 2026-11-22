@@ -33,7 +33,7 @@ export function EmptyState({ hasDocuments, onExample }: Props) {
       </div>
       <h2 className="empty-title">Ask questions about your documents</h2>
       <p className="empty-lead">
-        Sentinel answers only from what is actually written in your documents, and traces every
+        Citebound answers only from what is actually written in your documents, and traces every
         claim back to its source — so you can trust the answer without re-reading the document.
       </p>
 

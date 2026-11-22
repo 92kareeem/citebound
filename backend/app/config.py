@@ -31,7 +31,7 @@ LLMProvider = Literal["groq", "openai", "azure", "anthropic", "local"]
 
 
 class Settings(BaseSettings):
-    """All Sentinel configuration, typed and validated by pydantic-settings."""
+    """All Citebound configuration, typed and validated by pydantic-settings."""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
@@ -155,10 +155,10 @@ class Settings(BaseSettings):
     # --- AWS ---
     aws_region: str = "ap-south-1"
     s3_bucket_docs: str = ""
-    ddb_table_users: str = "sentinel-users"
-    ddb_table_quotas: str = "sentinel-quotas"
-    ddb_table_traces: str = "sentinel-traces"
-    ddb_table_documents: str = "sentinel-documents"
+    ddb_table_users: str = "citebound-users"
+    ddb_table_quotas: str = "citebound-quotas"
+    ddb_table_traces: str = "citebound-traces"
+    ddb_table_documents: str = "citebound-documents"
 
     # --- index publication lock (rag/index_lock.py) ---
     # Sized to the Lambda timeout, not to typical work: a lease shorter than

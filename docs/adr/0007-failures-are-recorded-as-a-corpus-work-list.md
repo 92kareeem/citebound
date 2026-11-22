@@ -4,7 +4,7 @@
 
 ## Context
 
-Sentinel calls itself self-healing. What it actually had was *recovery*: a
+Citebound calls itself self-healing. What it actually had was *recovery*: a
 failed critic score triggers a query rewrite or a model escalation, and the
 request either succeeds or refuses. That is genuinely useful and it is also
 entirely within one request. The next person to ask the same question starts
@@ -12,7 +12,7 @@ from scratch and fails the same way. Nothing in the system gets better.
 
 The gap is not technical. It is about **who owns the failure**.
 
-When Sentinel refuses, it has established a fact about the corpus — "nothing
+When Citebound refuses, it has established a fact about the corpus — "nothing
 here covers parental leave for contractors". Today that fact goes nowhere. The
 person who asked rephrases, or gives up and asks a colleague. The document
 owner, the one person who could write the missing paragraph, never hears about

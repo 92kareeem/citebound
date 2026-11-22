@@ -1,7 +1,7 @@
 # Phase 2 Implementation Plan
 
 ## Goal
-Turn Sentinel from a strong MVP into a more product-like AI assistant with better context handling, stronger evaluation, and a more polished user experience.
+Turn Citebound from a strong MVP into a more product-like AI assistant with better context handling, stronger evaluation, and a more polished user experience.
 
 ## Priority 1 — Conversation memory
 - Add conversation history to the query API contract.

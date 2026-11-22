@@ -1,4 +1,4 @@
-# Sentinel API for docker compose and any container host (not Lambda — see
+# Citebound API for docker compose and any container host (not Lambda — see
 # Dockerfile.lambda). Same dependency set as the Lambda image: no torch, the
 # quantized ONNX MiniLM produces the same vectors in ~60 MB instead of ~1.5 GB.
 #
@@ -15,11 +15,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 COPY docker/requirements-lambda.txt /tmp/requirements.txt
-# The grounding gate is the in-repo sentinel-proof package, installed from
+# The grounding gate is the in-repo citebound package, installed from
 # source so the image always runs the gate the commit ships, not a PyPI release.
-COPY packages/sentinel-proof /tmp/sentinel-proof
-RUN pip install -r /tmp/requirements.txt "uvicorn[standard]~=0.32" /tmp/sentinel-proof \
- && rm -rf /tmp/sentinel-proof
+COPY packages/citebound /tmp/citebound
+RUN pip install -r /tmp/requirements.txt "uvicorn[standard]~=0.32" /tmp/citebound \
+ && rm -rf /tmp/citebound
 
 # Pinned to a commit, not a branch: a moved model would silently produce
 # embeddings that no longer match an index built with the old one.
@@ -37,15 +37,15 @@ COPY backend/app ./app
 COPY backend/ingestion ./ingestion
 COPY corpus ./corpus
 COPY evals/regressions.json ./evals/regressions.json
-COPY docker/entrypoint.sh /usr/local/bin/sentinel-entrypoint
+COPY docker/entrypoint.sh /usr/local/bin/citebound-entrypoint
 # A Windows checkout can turn LF into CRLF, and a shebang ending in \r is
 # "file not found" inside the container. Normalise here as well as in
 # .gitattributes, so the image builds from any checkout.
-RUN sed -i 's/\r$//' /usr/local/bin/sentinel-entrypoint \
- && chmod +x /usr/local/bin/sentinel-entrypoint \
- && useradd --create-home --uid 1000 sentinel \
+RUN sed -i 's/\r$//' /usr/local/bin/citebound-entrypoint \
+ && chmod +x /usr/local/bin/citebound-entrypoint \
+ && useradd --create-home --uid 1000 citebound \
  && mkdir -p /data \
- && chown -R sentinel /data /app/evals
+ && chown -R citebound /data /app/evals
 
 ENV EMBED_BACKEND=onnx \
     ONNX_MODEL_DIR=/opt/onnx \
@@ -54,10 +54,10 @@ ENV EMBED_BACKEND=onnx \
     REGRESSIONS_PATH=/app/evals/regressions.json \
     PYTHONPATH=/app
 
-USER sentinel
+USER citebound
 EXPOSE 8000
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=60s --retries=6 \
   CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=2).status == 200 else 1)"
 
-ENTRYPOINT ["sentinel-entrypoint"]
+ENTRYPOINT ["citebound-entrypoint"]

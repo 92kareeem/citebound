@@ -1,5 +1,5 @@
 name: Bug report
-description: Something in the Sentinel platform (API, UI, deploy) does not work as documented
+description: Something in the Citebound platform (API, UI, deploy) does not work as documented
 title: "[bug] "
 labels: ["bug"]
 body:

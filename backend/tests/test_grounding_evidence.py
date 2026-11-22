@@ -186,7 +186,7 @@ def test_an_answer_that_is_mostly_ungrounded_still_fails_the_gate() -> None:
     assert result.stripped_ratio > grounding.MAX_STRIPPED_RATIO
 
 
-def test_the_refusal_sentinel_is_never_treated_as_an_ungrounded_answer() -> None:
+def test_the_refusal_citebound_is_never_treated_as_an_ungrounded_answer() -> None:
     result = grounding.verify("INSUFFICIENT_CONTEXT", [REFUNDS])
 
     assert result.ok

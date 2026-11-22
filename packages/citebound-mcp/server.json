@@ -1,0 +1,25 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.92kareeem/citebound",
+  "title": "Citebound",
+  "description": "Checks an answer against its sources: numbers and citations verified, wrong ones fixed. No model.",
+  "repository": {
+    "url": "https://github.com/92kareeem/citebound",
+    "source": "github",
+    "subfolder": "packages/citebound-mcp"
+  },
+  "websiteUrl": "https://92kareeem.github.io/citebound/",
+  "version": "0.2.0",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "citebound-mcp",
+      "version": "0.2.0",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

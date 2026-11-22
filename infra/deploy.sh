@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sentinel deployment. Referenced by `make deploy`.
+# Citebound deployment. Referenced by `make deploy`.
 #
 # This script was referenced by the Makefile but did not exist, so "deploy" was
 # an undocumented sequence of manual console/CLI steps — not reproducible, and
@@ -15,7 +15,7 @@ set -euo pipefail
 
 REGION="${AWS_REGION:-ap-south-1}"
 ACCOUNT_ID="${AWS_ACCOUNT_ID:?set AWS_ACCOUNT_ID}"
-PROJECT=sentinel
+PROJECT=citebound
 FUNCTION="${PROJECT}-api"
 ECR_REPO="${PROJECT}-api"
 DOCS_BUCKET="${S3_BUCKET_DOCS:-${PROJECT}-docs-${ACCOUNT_ID}}"
@@ -96,9 +96,9 @@ log "Lambda function"
 # anyone with lambda:GetFunctionConfiguration and show up in console
 # screenshots. The function reads the SSM SecureString named below at cold
 # start (config.get_settings). Create it once, out of band:
-#   aws ssm put-parameter --name /sentinel/groq-api-key --type SecureString --value <key>
+#   aws ssm put-parameter --name /citebound/groq-api-key --type SecureString --value <key>
 # (AWS_REGION is not set either: Lambda provides it to every function.)
-ENV_VARS="Variables={GROQ_API_KEY_SSM_PARAM=/sentinel/groq-api-key,S3_BUCKET_DOCS=${DOCS_BUCKET}}"
+ENV_VARS="Variables={GROQ_API_KEY_SSM_PARAM=/citebound/groq-api-key,S3_BUCKET_DOCS=${DOCS_BUCKET}}"
 
 if aws lambda get-function --function-name "$FUNCTION" --region "$REGION" >/dev/null 2>&1; then
   aws lambda update-function-code --function-name "$FUNCTION" --region "$REGION" \

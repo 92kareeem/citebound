@@ -1,4 +1,4 @@
-"""Run the Sentinel load test: every scenario, a staircase of arrival rates.
+"""Run the Citebound load test: every scenario, a staircase of arrival rates.
 
     python benchmarks/run.py                          # full run, ~15 minutes
     python benchmarks/run.py --scenarios health --steps 50,100 --duration 10
@@ -94,7 +94,7 @@ def step_passes(step: dict[str, Any]) -> bool:
     )
 
 
-API_CONTAINER = "sentinel-bench-api-1"
+API_CONTAINER = "citebound-bench-api-1"
 
 
 @dataclass
@@ -227,7 +227,7 @@ def jmeter_cmd(home: Path, jtl: Path, log: Path, props: dict[str, str]) -> list[
         str(home / "bin" / "ApacheJMeter.jar"),
         "-n",
         "-t",
-        str(HERE / "sentinel.jmx"),
+        str(HERE / "citebound.jmx"),
         "-l",
         str(jtl),
         "-j",
@@ -240,7 +240,7 @@ def jmeter_cmd(home: Path, jtl: Path, log: Path, props: dict[str, str]) -> list[
         # uvicorn closes a keep-alive connection after 5 s idle. A JMeter
         # thread pacing a low rate idles longer than that and can send on a
         # socket the server has just closed (NoHttpResponseException): the
-        # request never reaches Sentinel. Retire idle connections at 4 s.
+        # request never reaches Citebound. Retire idle connections at 4 s.
         "-Jhttpclient4.idletimeout=4000",
         "-Jhttpclient4.validate_after_inactivity=1000",
     ]

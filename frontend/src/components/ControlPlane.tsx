@@ -22,7 +22,7 @@ interface Props {
   onFixGap: (gap: KnowledgeGap) => void;
 }
 
-// The Sentinel control plane: one dialog, four tabs, for whoever operates the
+// The Citebound control plane: one dialog, four tabs, for whoever operates the
 // system rather than whoever asks it questions. WAI-ARIA tabs: arrow keys
 // move between tabs, Tab moves into the panel.
 export function ControlPlane({ initialTab = "telemetry", onClose, onFixGap }: Props) {

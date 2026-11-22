@@ -81,7 +81,7 @@ def test_refusal_drops_citations_so_none_render_beneath_it() -> None:
 
 
 def test_an_honest_insufficient_context_is_not_recorded_as_a_rejected_draft() -> None:
-    """The sentinel is a correct outcome, not a suppressed answer — recording
+    """The citebound is a correct outcome, not a suppressed answer — recording
     it as a rejected draft would flood triage with successes."""
     out = refusal_node(_state(answer="INSUFFICIENT_CONTEXT"))
 

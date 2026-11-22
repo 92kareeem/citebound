@@ -34,10 +34,10 @@ def test_ssm_parameter_is_fetched_when_no_direct_key(monkeypatch) -> None:
         return "gsk_from_ssm"
 
     monkeypatch.setattr(config, "_fetch_ssm_secret", fake_fetch)
-    monkeypatch.setenv("GROQ_API_KEY_SSM_PARAM", "/sentinel/groq-api-key")
+    monkeypatch.setenv("GROQ_API_KEY_SSM_PARAM", "/citebound/groq-api-key")
 
     assert config.get_settings().groq_api_key == "gsk_from_ssm"
-    assert calls == [("/sentinel/groq-api-key", "ap-south-1")]
+    assert calls == [("/citebound/groq-api-key", "ap-south-1")]
 
 
 def test_ssm_is_read_once_per_process_not_per_call(monkeypatch) -> None:
@@ -45,7 +45,7 @@ def test_ssm_is_read_once_per_process_not_per_call(monkeypatch) -> None:
     latency to every query and burn SSM API quota for no benefit."""
     calls: list[str] = []
     monkeypatch.setattr(config, "_fetch_ssm_secret", lambda n, r: calls.append(n) or "k")
-    monkeypatch.setenv("GROQ_API_KEY_SSM_PARAM", "/sentinel/groq-api-key")
+    monkeypatch.setenv("GROQ_API_KEY_SSM_PARAM", "/citebound/groq-api-key")
 
     for _ in range(5):
         config.get_settings()
@@ -60,7 +60,7 @@ def test_direct_key_wins_and_ssm_is_never_called(monkeypatch) -> None:
 
     monkeypatch.setattr(config, "_fetch_ssm_secret", must_not_run)
     monkeypatch.setenv("GROQ_API_KEY", "gsk_local")
-    monkeypatch.setenv("GROQ_API_KEY_SSM_PARAM", "/sentinel/groq-api-key")
+    monkeypatch.setenv("GROQ_API_KEY_SSM_PARAM", "/citebound/groq-api-key")
 
     assert config.get_settings().groq_api_key == "gsk_local"
 
@@ -88,9 +88,9 @@ def test_unreadable_parameter_fails_loudly_without_leaking_a_value(monkeypatch) 
 
     fake_boto3 = types.SimpleNamespace(client=lambda service, region_name: FakeSSM())
     monkeypatch.setitem(sys.modules, "boto3", fake_boto3)
-    monkeypatch.setenv("GROQ_API_KEY_SSM_PARAM", "/sentinel/groq-api-key")
+    monkeypatch.setenv("GROQ_API_KEY_SSM_PARAM", "/citebound/groq-api-key")
 
-    with pytest.raises(RuntimeError, match="/sentinel/groq-api-key"):
+    with pytest.raises(RuntimeError, match="/citebound/groq-api-key"):
         config.get_settings()
 
 
@@ -106,7 +106,7 @@ def test_empty_parameter_is_rejected(monkeypatch) -> None:
     monkeypatch.setitem(
         sys.modules, "boto3", types.SimpleNamespace(client=lambda s, region_name: FakeSSM())
     )
-    monkeypatch.setenv("GROQ_API_KEY_SSM_PARAM", "/sentinel/groq-api-key")
+    monkeypatch.setenv("GROQ_API_KEY_SSM_PARAM", "/citebound/groq-api-key")
 
     with pytest.raises(RuntimeError, match="empty"):
         config.get_settings()

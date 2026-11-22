@@ -1,4 +1,4 @@
-# Sentinel, the whole stack, no cloud account required.
+# Citebound, the whole stack, no cloud account required.
 #
 #   cp .env.example .env        # add a free Groq key (or skip: the demo still runs)
 #   docker compose up --build   # http://localhost:5173
@@ -8,10 +8,10 @@
 #   docker compose --profile ollama up --build
 #   docker compose exec ollama ollama pull llama3.1:8b
 #
-# Storage is local files in the `sentinel-data` volume. The same code runs
+# Storage is local files in the `citebound-data` volume. The same code runs
 # against DynamoDB + S3 + Lambda with STORAGE_BACKEND=aws (see infra/).
 
-name: sentinel
+name: citebound
 
 services:
   api:
@@ -33,7 +33,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - sentinel-data:/data
+      - citebound-data:/data
       # Promoting a regression from the control plane writes the suite back
       # into your checkout, ready to commit (ADR 0008).
       - ./evals:/app/evals
@@ -62,5 +62,5 @@ services:
       - ollama-models:/root/.ollama
 
 volumes:
-  sentinel-data:
+  citebound-data:
   ollama-models:
