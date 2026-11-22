@@ -32,6 +32,18 @@ All notable changes to `sentinel-proof`. The format follows
   refusals of 53. No behaviour changed in this entry; the numbers are the
   baseline the next release is measured against.
 
+- Unit guard: a figure is bound to the unit it is quoted with, so a passage
+  saying "3 days" no longer supports a claim of "3 months", and a citation
+  repair cannot land on such a passage either. It rejects a passage only when
+  that passage quotes the claim's own figure under a different unit, so a
+  figure inside a range ("3 to 5 days"), a spelled-out unit and anything
+  outside the closed vocabulary are left to the existing numeric check. A
+  figure may carry more than one unit, because "$1,720 per year" is both a sum
+  and a rate. Benchmark: `unit` 0/4 to 4/4 pairs, overall 27 to 31 of 52,
+  false accepts 21 to 17 of 51, false refusals unchanged at 5 of 53. On the
+  public RAGTruth training split it detected three more unsupported answers
+  and refused no additional clean one.
+
 ### Fixed
 
 - An answer with no surviving claims now refuses even when

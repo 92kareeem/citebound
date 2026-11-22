@@ -16,7 +16,9 @@ is untrustworthy and the verdict is ``ok=False``: refuse, or repair upstream.
 
 An English operator guard also rejects explicit polarity changes when the
 claim and an evidence sentence have matching normalized content anchors.
-This applies both to original citations and candidate citation repairs.
+A unit guard rejects a passage that quotes the claim's own figure with a
+different unit, so "3 days" cannot support "3 months". Both apply to the
+original citations and to candidate citation repairs.
 
 What this deliberately does NOT do is judge semantic entailment. Lexical
 overlap is a weak signal, and a deterministic checker that tried to be clever
@@ -46,6 +48,7 @@ from .citations import (
 from .passages import Passage, _with_ids
 from .polarity import PolarityGuard, statement
 from .refusal import RefusalReason, is_refusal, refusal_text
+from .units import UnitGuard, figures
 
 # Refuse only if MOST of the answer is ungrounded. A single weak sentence in an
 # otherwise-cited answer is stripped and the rest still ships.
@@ -436,6 +439,7 @@ def verify(
     cited_ids: list[str] = []
     stripped = repaired = total = 0
     polarity_guard = PolarityGuard()
+    unit_guard = UnitGuard()
 
     for prose, tag_ids in units:
         # Tags naming passages that were never retrieved are fabricated; they
@@ -453,11 +457,16 @@ def verify(
             if _is_lead_in(sentence) or len(_WORD_RE.findall(sentence)) < MIN_WORDS_PER_SENTENCE:
                 continue  # not a claim; counts neither for nor against
             total += 1
+            plain = _LIST_MARKER_RE.sub("", sentence)
             terms = _content_terms(sentence)
-            numbers = _numbers_in(_LIST_MARKER_RE.sub("", sentence))
-
-            polarity = statement(_LIST_MARKER_RE.sub("", sentence))
-            eligible = [p for p in cited if polarity_guard.allows(polarity, p)]
+            numbers = _numbers_in(plain)
+            polarity = statement(plain)
+            quoted = figures(plain)
+            eligible = [
+                p
+                for p in cited
+                if polarity_guard.allows(polarity, p) and unit_guard.allows(quoted, p)
+            ]
             support = _minimal_support(terms, numbers, eligible, opt)
             status = ClaimStatus.SUPPORTED
             if support is None:
@@ -466,7 +475,11 @@ def verify(
                 # re-point the citation so that clicking it lands on the
                 # claim. Accepting the sentence with its wrong tag would read
                 # fine and break the moment anyone checked.
-                eligible = [p for p in passages if polarity_guard.allows(polarity, p)]
+                eligible = [
+                    p
+                    for p in passages
+                    if polarity_guard.allows(polarity, p) and unit_guard.allows(quoted, p)
+                ]
                 found = _best_supporting(terms, numbers, eligible, opt)
                 if found is None:
                     stripped += 1

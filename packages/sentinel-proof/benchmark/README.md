@@ -36,12 +36,28 @@ Measured on this set, not on a friendly one. The current report is in
 | False accepts | 38 of 51 |
 | False refusals | 5 of 53 |
 
-The unreleased polarity guard reaches 27/52 pairs (52%), with 21/51 false
-accepts and the same 5/53 false refusals on these unchanged inputs. It checks
-English negation, explicit modality changes, comparison direction, temporal
-order and quantifier strengthening only when normalized content anchors match.
-It deliberately allows universal-to-partial weakening; the two existing
-`quantifier` reject labels for that behavior remain visible as disagreements.
+The unreleased source checkout reaches 31/52 pairs (60%), with 17/51 false
+accepts and the same 5/53 false refusals on these unchanged inputs. Two
+dependency-free guards account for the difference.
+
+The polarity guard checks English negation, explicit modality changes,
+comparison direction, temporal order and quantifier strengthening, only when
+normalized content anchors match. It deliberately allows universal-to-partial
+weakening; the two existing `quantifier` reject labels for that behavior remain
+visible as disagreements.
+
+The unit guard binds each figure to the unit it is quoted with, so "3 days"
+stops supporting "3 months". It rejects a passage only when that passage quotes
+the claim's own figure under a different unit, which leaves ranges, spelled-out
+units and unknown units alone.
+
+Neither guard changes the headline tables above, which report the released
+version. Both were also run against the roughly 4,900 good-quality question
+answering responses in the public RAGTruth training split, scored by whether a
+sentence is removed, as an external false-refusal check: the polarity guard
+changed no decision there, and the unit guard caught three more unsupported
+answers while refusing no additional clean one. That split has no citation
+labels and is used here for development only, never as an accuracy claim.
 
 That is a poor score and it is published on purpose. The gate compares bags of
 words and figures, so it cannot see the word that carries the meaning: "not",
