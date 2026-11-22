@@ -29,18 +29,20 @@ sys.path.insert(0, str(HERE.parent / "src"))
 
 from sentinel_proof import __version__, passages_from_texts, verify  # noqa: E402
 
-CASES = HERE / "cases.jsonl"
-BASELINE = HERE / "baseline.json"
-CASE_BASELINE = HERE / "case-baseline.json"
-REPORT = HERE / "report.md"
+# Every case set keeps the same four file names, so one scorer serves the
+# hand-written set here and the set derived from RAGTruth in derived/.
+CASES_NAME = "cases.jsonl"
+BASELINE_NAME = "baseline.json"
+CASE_BASELINE_NAME = "case-baseline.json"
+REPORT_NAME = "report.md"
 SCORER = "first-claim-status-v1"
 
 KEPT = {"supported", "repaired"}
 COUNTERS = ("reject", "keep", "false_accept", "false_refuse", "pairs", "pairs_ok")
 
 
-def load() -> list[dict]:
-    with CASES.open(encoding="utf-8") as fh:
+def load(cases_path: Path) -> list[dict]:
+    with cases_path.open(encoding="utf-8") as fh:
         cases = [json.loads(line) for line in fh if line.strip()]
     validate_cases(cases)
     return cases
@@ -187,7 +189,7 @@ def pct(part: int, whole: int) -> str:
     return "n/a" if not whole else f"{100 * part / whole:.0f}%"
 
 
-def write_report(per_class: dict, results: list[dict], total: dict) -> None:
+def write_report(report_path: Path, per_class: dict, results: list[dict], total: dict) -> None:
     lines = [
         "# Grounding benchmark report",
         "",
@@ -226,7 +228,7 @@ def write_report(per_class: dict, results: list[dict], total: dict) -> None:
             kind = "false refusal" if r["expect"] == "keep" else "false accept"
             got = f"{r['status']} ({kind})"
             lines.append(f"| `{r['id']}` | {r['class']} | {r['expect']} | {got} | {r['why']} |")
-    REPORT.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    report_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def main() -> int:
@@ -234,15 +236,27 @@ def main() -> int:
     mode = ap.add_mutually_exclusive_group()
     mode.add_argument("--check", action="store_true", help="check class and case regressions")
     mode.add_argument("--update-baseline", action="store_true")
+    ap.add_argument(
+        "--dir",
+        type=Path,
+        default=HERE,
+        help="directory holding the case set and its baselines (default: this one)",
+    )
     args = ap.parse_args()
 
+    directory = args.dir.resolve()
+    cases_path = directory / CASES_NAME
+    baseline_path = directory / BASELINE_NAME
+    case_baseline_path = directory / CASE_BASELINE_NAME
+    report_path = directory / REPORT_NAME
+
     try:
-        cases = load()
+        cases = load(cases_path)
     except (ValueError, OSError) as exc:
         ap.error(str(exc))
     per_class, results = score(cases)
     total = totals(per_class)
-    write_report(per_class, results, total)
+    write_report(report_path, per_class, results, total)
 
     width = max(len(name) for name in per_class)
     print(f"{'class'.ljust(width)}  pairs  right  false accept  false refuse")
@@ -258,7 +272,7 @@ def main() -> int:
         f"false accepts {total['false_accept']}/{total['reject']} | "
         f"false refusals {total['false_refuse']}/{total['keep']}"
     )
-    print(f"report written to {REPORT.relative_to(HERE.parent)}")
+    print(f"report written to {report_path.relative_to(HERE.parent)}")
 
     snapshot = {
         name: {k: b[k] for k in ("false_accept", "false_refuse", "pairs_ok")}
@@ -266,20 +280,22 @@ def main() -> int:
     }
     case_state = case_snapshot(cases, results)
     if args.update_baseline:
-        BASELINE.write_text(json.dumps(snapshot, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        CASE_BASELINE.write_text(
+        baseline_path.write_text(
+            json.dumps(snapshot, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        case_baseline_path.write_text(
             json.dumps(case_state, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
-        print(f"baselines updated: {BASELINE.name}, {CASE_BASELINE.name}")
+        print(f"baselines updated: {baseline_path.name}, {case_baseline_path.name}")
         return 0
 
     if args.check:
-        if not BASELINE.exists() or not CASE_BASELINE.exists():
+        if not baseline_path.exists() or not case_baseline_path.exists():
             print("missing class or case baseline; review and run --update-baseline first")
             return 1
         try:
-            old = json.loads(BASELINE.read_text(encoding="utf-8"))
-            old_cases = json.loads(CASE_BASELINE.read_text(encoding="utf-8"))
+            old = json.loads(baseline_path.read_text(encoding="utf-8"))
+            old_cases = json.loads(case_baseline_path.read_text(encoding="utf-8"))
         except (ValueError, OSError) as exc:
             print(f"cannot read baselines: {exc}")
             return 1

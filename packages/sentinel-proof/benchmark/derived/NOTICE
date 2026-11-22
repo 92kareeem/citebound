@@ -1,0 +1,21 @@
+The cases in this directory are derived from RAGTruth, which is distributed
+under the MIT License by Particle Media.
+
+    https://github.com/ParticleMedia/RAGTruth
+
+Each case records the upstream response id, source id and generating model in
+its `source` field, so any case can be traced back to the original record.
+Sentences and passages are reproduced from that dataset; the pairing, the
+filtering and the labels in the `expect` field are ours.
+
+The RAGTruth authors ask that work using the dataset cite their paper:
+
+    @article{niu2024ragtruth,
+      title   = {RAGTruth: A Hallucination Corpus for Developing Trustworthy
+                 Retrieval-Augmented Language Models},
+      author  = {Niu, Cheng and Wu, Yuanhao and Zhu, Juno and Xu, Siliang and
+                 Shum, Kashun and Zhong, Randy and Song, Juntong and
+                 Zhang, Tong},
+      journal = {arXiv preprint arXiv:2401.00396},
+      year    = {2024}
+    }

@@ -129,28 +129,26 @@ def test_two_keep_repair_control_is_valid(cases):
 def test_cli_check_detects_case_regression_with_unchanged_class_totals(
     cases, monkeypatch, tmp_path, capsys
 ):
-    monkeypatch.setattr(runner, "CASES", tmp_path / "cases.jsonl")
-    monkeypatch.setattr(runner, "BASELINE", tmp_path / "baseline.json")
-    monkeypatch.setattr(runner, "CASE_BASELINE", tmp_path / "case-baseline.json")
-    monkeypatch.setattr(runner, "REPORT", tmp_path / "report.md")
     monkeypatch.setattr(runner, "HERE", tmp_path)
-    runner.CASES.write_text("\n".join(json.dumps(c) for c in cases), encoding="utf-8")
+    case_file = tmp_path / runner.CASES_NAME
+    baseline = tmp_path / runner.BASELINE_NAME
+    case_file.write_text("\n".join(json.dumps(c) for c in cases), encoding="utf-8")
     outcomes = {"good": (True, "supported"), "bad": (True, "supported")}
     monkeypatch.setattr(runner, "run_case", lambda case: outcomes[case["id"]])
-    monkeypatch.setattr("sys.argv", ["run.py", "--update-baseline"])
+    monkeypatch.setattr("sys.argv", ["run.py", "--update-baseline", "--dir", str(tmp_path)])
     assert runner.main() == 0
     # Two same-label controls let a false refusal move without changing totals.
     # Pin their labels before constructing that scenario.
     cases[1]["expect"] = "keep"
-    runner.CASES.write_text("\n".join(json.dumps(c) for c in cases), encoding="utf-8")
+    case_file.write_text("\n".join(json.dumps(c) for c in cases), encoding="utf-8")
     outcomes["bad"] = (False, "stripped")
     assert runner.main() == 0
-    original_class_baseline = runner.BASELINE.read_bytes()
+    original_class_baseline = baseline.read_bytes()
     outcomes.update(good=(False, "stripped"), bad=(True, "supported"))
-    monkeypatch.setattr("sys.argv", ["run.py", "--check"])
+    monkeypatch.setattr("sys.argv", ["run.py", "--check", "--dir", str(tmp_path)])
     assert runner.main() == 1
     assert "good: previously correct case now wrong" in capsys.readouterr().out
-    assert runner.BASELINE.read_bytes() == original_class_baseline
+    assert baseline.read_bytes() == original_class_baseline
 
 
 def test_check_and_update_cannot_be_combined(monkeypatch):
@@ -158,3 +156,35 @@ def test_check_and_update_cannot_be_combined(monkeypatch):
     with pytest.raises(SystemExit) as exc:
         runner.main()
     assert exc.value.code == 2
+
+
+DERIVED = Path(__file__).resolve().parents[1] / "benchmark" / "derived" / "cases.jsonl"
+
+
+def test_the_derived_set_is_valid_and_keeps_its_provenance():
+    """Every derived case must be traceable to the upstream record it came from.
+
+    Without the ids nobody can check that the pairing is honest, which is the
+    whole reason this set exists beside the hand-written one.
+    """
+    cases = runner.load(DERIVED)
+    runner.validate_cases(cases)
+    assert len(cases) >= 100
+    for case in cases:
+        source = case["source"]
+        assert source["dataset"] == "RAGTruth"
+        # The held-out split must never leak into a set that gets tuned against.
+        assert source["split"] == "train"
+        assert source["response_id"] and source["source_id"]
+        assert len(case["passages"]) >= 2
+        assert case["class"].startswith("rt-")
+
+
+def test_every_derived_pair_is_one_reject_and_one_keep():
+    cases = runner.load(DERIVED)
+    by_id = {case["id"]: case for case in cases}
+    for case in cases:
+        twin = by_id[case["pair"]]
+        assert {case["expect"], twin["expect"]} == {"reject", "keep"}
+        # Same evidence on both halves: the pair isolates the claim.
+        assert case["passages"] == twin["passages"]

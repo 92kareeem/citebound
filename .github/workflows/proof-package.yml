@@ -37,6 +37,8 @@ jobs:
       - run: pytest -q
       - name: Grounding benchmark, no regression against the baseline
         run: python benchmark/run.py --check
+      - name: Same, on the pairs derived from RAGTruth's human labels
+        run: python benchmark/run.py --dir benchmark/derived --check
       - name: The package really has no dependencies
         run: |
           pip install pipdeptree
