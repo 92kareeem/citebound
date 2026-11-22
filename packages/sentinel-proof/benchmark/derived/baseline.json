@@ -1,0 +1,22 @@
+{
+  "rt-evident-baseless": {
+    "false_accept": 23,
+    "false_refuse": 5,
+    "pairs_ok": 15
+  },
+  "rt-evident-conflict": {
+    "false_accept": 30,
+    "false_refuse": 8,
+    "pairs_ok": 7
+  },
+  "rt-subtle-baseless": {
+    "false_accept": 29,
+    "false_refuse": 7,
+    "pairs_ok": 7
+  },
+  "rt-subtle-conflict": {
+    "false_accept": 13,
+    "false_refuse": 3,
+    "pairs_ok": 1
+  }
+}

@@ -36,6 +36,24 @@ invalid labels and missing, nonreciprocal or cross-class pairs before scoring.
 Two-keep citation-repair controls remain valid. No labels or verifier behavior
 were changed by introducing these checks.
 
+## Two case sets
+
+The set in this directory is **hand-written**, which makes it precise about one
+failure mode at a time and open to the objection that the same person wrote the
+system and the test.
+
+[`derived/`](derived/) answers that objection: 134 pairs built from RAGTruth's
+human-labelled hallucination spans, where every sentence was written by a
+production model and judged by somebody else. Scored by the same runner:
+
+```bash
+python benchmark/run.py --dir benchmark/derived
+```
+
+Read them together. The hand-written set says which specific mutations the gate
+can see; the derived set says how much of the real problem that reaches. The
+answers are very different, and both are in CI.
+
 ## Why pairs
 
 A verifier that rejects every claim has a false-accept rate of zero and is
