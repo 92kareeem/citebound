@@ -6,6 +6,19 @@ All notable changes to `sentinel-proof`. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Add a dependency-free English polarity guard for sentences with matching
+  normalized content anchors: negation, explicit modality changes, reversed
+  comparisons/time order, and quantifier strengthening. Apply the same check
+  during citation repair. Parse evidence once per verification call.
+- On the unchanged 104-case development suite: pairs right 10 -> 27 of 52,
+  false accepts 38 -> 21 of 51, false refusals unchanged at 5 of 53.
+  Quantifier weakening is intentionally allowed; this is not semantic proof.
+- Document benchmark label/scoring limitations before competitor comparisons.
+  Generated reports identify a source checkout rather than implying the
+  unreleased behavior is available in the declared PyPI version.
+
 ### Added
 
 - `benchmark/`: a contrastive benchmark for citation-level grounding. 104 cases

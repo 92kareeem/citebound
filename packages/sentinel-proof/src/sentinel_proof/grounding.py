@@ -1,6 +1,7 @@
 """The deterministic grounding gate: the last check before a reader.
 
-An LLM judge can be wrong. This is pure string logic and cannot hallucinate.
+An LLM judge can be wrong. This adds deterministic string checks; they can
+also miss errors and do not establish semantic entailment.
 It answers one question per sentence: is there a retrieved passage that
 actually supports this, and is the sentence pointing at it?
 
@@ -12,6 +13,10 @@ Three outcomes per sentence:
 
 If more than ``max_stripped_ratio`` of the sentences are stripped the answer
 is untrustworthy and the verdict is ``ok=False``: refuse, or repair upstream.
+
+An English operator guard also rejects explicit polarity changes when the
+claim and an evidence sentence have matching normalized content anchors.
+This applies both to original citations and candidate citation repairs.
 
 What this deliberately does NOT do is judge semantic entailment. Lexical
 overlap is a weak signal, and a deterministic checker that tried to be clever
@@ -39,6 +44,7 @@ from .citations import (
     tags_to_numeric,
 )
 from .passages import Passage, _with_ids
+from .polarity import PolarityGuard, statement
 from .refusal import RefusalReason, is_refusal, refusal_text
 
 # Refuse only if MOST of the answer is ungrounded. A single weak sentence in an
@@ -415,6 +421,7 @@ def verify(
     kept: list[str] = []
     cited_ids: list[str] = []
     stripped = repaired = total = 0
+    polarity_guard = PolarityGuard()
 
     for prose, tag_ids in units:
         # Tags naming passages that were never retrieved are fabricated; they
@@ -435,7 +442,9 @@ def verify(
             terms = _content_terms(sentence)
             numbers = _numbers_in(_LIST_MARKER_RE.sub("", sentence))
 
-            support = _minimal_support(terms, numbers, cited, opt)
+            polarity = statement(_LIST_MARKER_RE.sub("", sentence))
+            eligible = [p for p in cited if polarity_guard.allows(polarity, p)]
+            support = _minimal_support(terms, numbers, eligible, opt)
             status = ClaimStatus.SUPPORTED
             if support is None:
                 # The passages it cites do not support it (or were never
@@ -443,7 +452,8 @@ def verify(
                 # re-point the citation so that clicking it lands on the
                 # claim. Accepting the sentence with its wrong tag would read
                 # fine and break the moment anyone checked.
-                found = _best_supporting(terms, numbers, passages, opt)
+                eligible = [p for p in passages if polarity_guard.allows(polarity, p)]
+                found = _best_supporting(terms, numbers, eligible, opt)
                 if found is None:
                     stripped += 1
                     missing = tuple(sorted(numbers - opt.question_numbers - _all_numbers(cited)))

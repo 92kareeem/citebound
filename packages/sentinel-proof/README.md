@@ -14,7 +14,7 @@ are removed, and an answer that is mostly unsupported is refused with a reason
 code instead of being shown.
 
 Pure Python. No dependencies, no model calls, no API key, no GPU. It runs in
-microseconds, so it can check every production answer rather than a sample.
+process; runtime depends on answer and evidence size.
 It works with LangChain, LlamaIndex, the OpenAI or Anthropic SDKs, or your own
 retriever.
 
@@ -78,8 +78,8 @@ wrong in exactly the way the model was, it costs a model call per answer, and it
 returns a score, which leaves you to pick a threshold and still ship the whole
 answer or none of it.
 
-This gate is string logic. It cannot hallucinate, it runs in microseconds, and it
-edits the answer down to what the evidence supports. It is deliberately **weak**:
+This gate uses deterministic string rules to remove claims that fail its checks.
+Those rules can still accept unsupported claims. It is deliberately **limited**:
 it checks lexical overlap and numbers, not semantic entailment, because a
 deterministic checker that tried to be clever about paraphrase produces false
 refusals on good answers. Use it *under* your judge, not instead of it. The two
@@ -91,6 +91,13 @@ last node before the user. The relevant decision record is
 [ADR 0003: grounding is deterministic, and deliberately weak](https://github.com/92kareeem/sentinel-rag/blob/main/docs/adr/0003-grounding-is-deterministic-not-only-an-llm-judge.md).
 
 ## What it checks, per sentence
+
+**Unreleased source checkout:** an additional English polarity guard rejects
+explicit negation, modality, comparison and time-order changes, and partial-to-
+universal quantifier changes when normalized content anchors match an evidence
+sentence. The guard also applies to replacement citations. It does not infer
+operator scope in arbitrary paraphrases, resolve conflicting sources, or verify
+entity/amount relationships. Universal-to-partial weakening remains allowed.
 
 | Check | Outcome |
 |---|---|
@@ -252,8 +259,8 @@ refusal prose that never leaks the unverified draft.
 
 Measured, and worse than you would hope. The repository carries a
 [contrastive benchmark](https://github.com/92kareeem/sentinel-rag/tree/main/packages/sentinel-proof/benchmark):
-104 cases in 52 pairs, where each pair is
-one claim that must be rejected and a near-identical one that must be kept.
+104 cases in 52 pairs, mostly a claim to reject and a near-identical one to
+keep, with additional evidence-change and citation-repair controls.
 
 | Metric | 0.1.2 |
 |---|---|
@@ -261,7 +268,12 @@ one claim that must be rejected and a near-identical one that must be kept.
 | False accepts, a wrong claim kept | 38 of 51 |
 | False refusals, a right claim dropped | 5 of 53 |
 
-It scores full marks on fabricated figures, citation repair and number
+The **unreleased source checkout** with the polarity guard scores **52%
+(27/52)**, with **21/51 false accepts** and the same **5/53 false refusals**.
+These are development results on unchanged inputs, not held-out accuracy.
+See the benchmark README for label disagreements and scoring limitations.
+
+Version 0.1.2 scores full marks on fabricated figures, citation repair and number
 formatting, and zero on anything that turns on one small word: "not", "may",
 "below", "after". Those are being fixed in 0.2.0, deterministically, and the
 baseline is enforced in CI so each fix is on the record.

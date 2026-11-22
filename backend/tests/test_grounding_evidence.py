@@ -108,6 +108,18 @@ def test_thousands_separators_do_not_look_like_different_numbers() -> None:
 # ----------------------------------------------- citations must point at truth
 
 
+def test_polarity_flip_is_rejected_by_the_platform_adapter() -> None:
+    source = _chunk("policy", "Refunds are not permitted after 30 days.")
+    result = grounding.verify("Refunds are permitted after 30 days [chunk:policy].", [source])
+    assert not result.ok and result.clean_answer == "" and result.valid_chunk_ids == []
+
+
+def test_polarity_preserving_answer_is_kept_by_the_platform_adapter() -> None:
+    source = _chunk("policy", "Refunds are not permitted after 30 days.")
+    result = grounding.verify("Refunds are not permitted after 30 days [chunk:policy].", [source])
+    assert result.ok and result.valid_chunk_ids == ["policy"]
+
+
 def test_a_citation_naming_the_wrong_passage_is_repaired_not_accepted() -> None:
     """THE second regression test.
 
