@@ -75,8 +75,8 @@
     "pairs_ok": 3
   },
   "unit": {
-    "false_accept": 4,
+    "false_accept": 0,
     "false_refuse": 0,
-    "pairs_ok": 0
+    "pairs_ok": 4
   }
 }

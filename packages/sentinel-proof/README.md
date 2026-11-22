@@ -274,10 +274,11 @@ keep, with additional evidence-change and citation-repair controls.
 | False accepts, a wrong claim kept | 38 of 51 |
 | False refusals, a right claim dropped | 5 of 53 |
 
-The **unreleased source checkout** with the polarity guard scores **52%
-(27/52)**, with **21/51 false accepts** and the same **5/53 false refusals**.
-These are development results on unchanged inputs, not held-out accuracy.
-See the benchmark README for label disagreements and scoring limitations.
+The **unreleased source checkout** with the polarity and unit guards scores
+**60% (31/52)**, with **17/51 false accepts** and the same **5/53 false
+refusals**. These are development results on unchanged inputs, not held-out
+accuracy. See the benchmark README for label disagreements and scoring
+limitations.
 
 Version 0.1.2 scores full marks on fabricated figures, citation repair and number
 formatting, and zero on anything that turns on one small word: "not", "may",

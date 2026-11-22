@@ -4,8 +4,8 @@
 
 | Metric | Value |
 |---|---|
-| Pair accuracy (both halves right) | **52%** (27 of 52) |
-| False accepts (wrong claim kept) | 21 of 51 (41%) |
+| Pair accuracy (both halves right) | **60%** (31 of 52) |
+| False accepts (wrong claim kept) | 17 of 51 (33%) |
 | False refusals (right claim dropped) | 5 of 53 (9%) |
 
 ## By class
@@ -27,7 +27,7 @@
 | repair | 2 | 2 | 0 / 1 | 0 / 3 |
 | staleness | 3 | 0 | 3 / 3 | 0 / 3 |
 | time-order | 3 | 3 | 0 / 3 | 0 / 3 |
-| unit | 4 | 0 | 4 / 4 | 0 / 4 |
+| unit | 4 | 4 | 0 / 4 | 0 / 4 |
 
 ## Cases the gate gets wrong
 
@@ -35,10 +35,6 @@
 |---|---|---|---|---|
 | `quantifier-01` | quantifier | reject | supported (false accept) | universal narrowed to partial |
 | `quantifier-03` | quantifier | reject | supported (false accept) | always weakened to sometimes |
-| `unit-01` | unit | reject | supported (false accept) | the figure is in the evidence but the unit is not |
-| `unit-02` | unit | reject | supported (false accept) | days changed to hours |
-| `unit-03` | unit | reject | supported (false accept) | currency changed |
-| `unit-04` | unit | reject | supported (false accept) | weeks changed to months |
 | `entity-01` | entity | reject | supported (false accept) | the actor is not the one in the evidence |
 | `entity-02` | entity | reject | supported (false accept) | a different person is credited |
 | `entity-03` | entity | reject | supported (false accept) | a different company is named |
