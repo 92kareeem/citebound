@@ -57,7 +57,14 @@ jobs:
       - run: twine check dist/*
       - name: The wheel installs into a clean environment and runs over stdio
         run: |
-          python -m venv /tmp/clean && /tmp/clean/bin/pip install -q dist/*.whl
+          python -m venv /tmp/clean
+          # The library from this same commit, installed first so the wheel's
+          # `citebound>=x` resolves locally. Taking it from PyPI would make
+          # this job fail on every pull request that raises that floor before
+          # the matching release exists, and would test the pair of versions
+          # that happen to be published rather than the pair in this commit.
+          /tmp/clean/bin/pip install -q ../citebound
+          /tmp/clean/bin/pip install -q dist/*.whl
           /tmp/clean/bin/citebound-mcp --version
           /tmp/clean/bin/python - <<'PY'
           import asyncio, shutil
