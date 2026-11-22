@@ -28,6 +28,23 @@ makes sure every citation points where it says it does. In particular:
 **every number in a claim must appear in a passage that claim cites.** For a
 system answering questions about refund windows, notice periods and limits,
 a plausible-but-wrong number is the most damaging thing it can say.
+
+One sentence shape is an explicit exception to "every claim needs lexical
+support": a blanket statement that no answer is available, such as "unable to
+answer based on given passages", or a bare pointer to citations with no
+assertion at all, such as "(Passages 1, 2, 3)". Neither names anything
+specific the evidence supposedly lacks, so neither can be a false claim about
+evidence coverage; stripping them punishes a model for honestly admitting it
+has nothing to add. This gate accepts such a sentence outright rather than
+discarding it the way a true lead-in is discarded, so the reader still sees
+it. A sentence naming a SPECIFIC absent topic - "the passages do not mention
+pricing" - is deliberately NOT included here, even though it reads the same
+way: measured against real labelled data, models also use that exact wording
+to falsely deny that the evidence covers something it actually does, and
+lexical overlap cannot tell a true denial from a false one. A sentence
+carrying any digit is never accepted this way either: a number is the single
+highest-stakes thing this gate exists to check, so a figure can never ride
+through on the back of surrounding meta-language.
 """
 
 from __future__ import annotations
@@ -79,6 +96,38 @@ _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+|\n+")
 # figures the evidence must contain, and it means nothing to a reader anyway.
 _CHUNK_REF_RE = re.compile(r"(?:\bchunks?\s*)?[\w-]*_(?:p\d+_)?s\d+_c\d+\b|(?<![\w])_c\d+\b")
 _EMPTY_PARENS_RE = re.compile(r"\(\s*[,;\s]*\)")
+
+# Each alternative is a wording that makes NO topic-specific claim about what
+# the evidence does or doesn't cover - only a blanket statement that no answer
+# is available. That distinction was reached empirically, not assumed: an
+# earlier, broader draft of this pattern also matched "the passages do not
+# provide X" for a named X (pricing, a procedure, a date). Measured against
+# RAGTruth's labels, four marked hallucinations used exactly that wording to
+# FALSELY deny that the evidence covers something it actually does, and lexical
+# overlap could not separate those from genuine true denials (both ranged
+# 0.06-0.40 on their own topic words). A claim naming a specific absent fact is
+# a real, falsifiable claim about evidence coverage, even if this gate cannot
+# verify it; only a claim that names nothing specific is safe to accept
+# outright. "Based on the passages, X happens" is excluded for the same
+# reason: X is a checkable claim, and only its citation attribution mentions
+# the evidence.
+_EVIDENCE_COMMENTARY_RE = re.compile(
+    r"\b(?:"
+    r"(?:unable|not\s+able|cannot|can\s+not|can'?t)\s+(?:to\s+)?answer\b.*?\b"
+    r"(?:passages?|context|documents?|information)"
+    r"|(?:may\s+not|do(?:es)?\s+not|don'?t|doesn'?t)\s+have\s+"
+    r"(?:all\s+the\s+|sufficient\s+|enough\s+|complete\s+)?(?:necessary\s+)?information"
+    r"\s+to\s+answer\s+the\s+question\b"
+    r")",
+    re.IGNORECASE,
+)
+# A sentence that is nothing but a pointer to its own citations - "(Passages 1,
+# 2, and 3)" - rather than any assertion. Full-string anchored so this can
+# never match a real sentence that merely happens to end in a parenthetical.
+_BARE_CITATION_RE = re.compile(
+    r"^\(?(?:see\s+)?passages?\s+\d+(?:\s*(?:,\s*and|,|and|-|to)\s*\d+)*\)?\.?$", re.IGNORECASE
+)
+_HAS_DIGIT_RE = re.compile(r"\d")
 
 _STOPWORDS = frozenset(
     {
@@ -251,6 +300,36 @@ def _without_chunk_refs(sentence: str) -> str:
 def _is_lead_in(sentence: str) -> bool:
     """ "The main ones are:" introduces the claims that follow and asserts nothing."""
     return sentence.rstrip().endswith(":")
+
+
+def _is_evidence_commentary(sentence: str) -> bool:
+    """Is this a blanket admission of no answer, naming no specific topic?
+
+    "Unable to answer based on given passages" and "(Passages 1, 2, 3)" assert
+    nothing checkable, so stripping them punishes a model for honestly
+    admitting it has nothing to add. Unlike a lead-in, a matching sentence is
+    kept, not discarded, since it still carries information the reader should
+    see.
+
+    Deliberately narrower than "any sentence reporting on the evidence":
+    "the passages do not mention pricing" names a specific absent topic, which
+    IS a falsifiable claim about coverage, just one this gate cannot verify.
+    Measured against RAGTruth's labels, models use that wording both honestly
+    and to falsely deny covered information, and lexical overlap could not
+    separate the two (see the module docstring). Only a sentence that names
+    nothing specific is safe to accept outright.
+
+    A sentence carrying any digit is excluded even if the wording matches: a
+    number is the one thing this gate always checks, so no figure may ride
+    through on the back of surrounding meta-language. The bare-citation
+    pattern is the one exception, since its only digits are passage indices
+    inside a full-string match that admits nothing else to hide behind them.
+    """
+    if _BARE_CITATION_RE.match(sentence.strip()):
+        return True
+    if _HAS_DIGIT_RE.search(sentence):
+        return False
+    return bool(_EVIDENCE_COMMENTARY_RE.search(sentence))
 
 
 def _cited_units(answer: str) -> list[tuple[str, list[str]]]:
@@ -441,19 +520,44 @@ def verify(
     polarity_guard = PolarityGuard()
     unit_guard = UnitGuard()
 
+    def accept_as_commentary(text: str, tag_ids: Sequence[str], cited: Sequence[Passage]) -> None:
+        # Accepted outright: see _is_evidence_commentary. Kept, with whatever
+        # it was originally cited with, never verified against evidence
+        # content, since there is none to check it against.
+        nonlocal total
+        total += 1
+        cited_here = tuple(p.id for p in cited)
+        tags = " ".join(f"[chunk:{p.id}]" for p in cited)
+        kept.append(f"{text} {tags}".rstrip())
+        claims.append(Claim(text, ClaimStatus.SUPPORTED, tuple(tag_ids), cited_here))
+        for pid in cited_here:
+            if pid not in cited_ids:
+                cited_ids.append(pid)
+
     for prose, tag_ids in units:
         # Tags naming passages that were never retrieved are fabricated; they
         # cannot support anything, so they simply drop out of the group.
         cited = [by_id[i] for i in tag_ids if i in by_id]
         sentences = _sentences(prose)
         if not sentences:
+            # Too sparse for `_sentences` to keep at all (fewer than
+            # MIN_WORDS_PER_SENTENCE words in the whole unit): still worth one
+            # more check before giving up on it, since "(Passage 1)" is
+            # exactly this sparse and is legitimate evidence commentary.
+            candidate = prose.strip(" .,;:\n\t")
+            if _is_evidence_commentary(candidate):
+                accept_as_commentary(candidate, tag_ids, cited)
+                continue
             total += 1
             stripped += 1  # degenerate: tags with nothing to stand behind
-            claims.append(Claim(prose.strip(" .,;:\n\t"), ClaimStatus.STRIPPED, tuple(tag_ids), ()))
+            claims.append(Claim(candidate, ClaimStatus.STRIPPED, tuple(tag_ids), ()))
             continue
 
         for raw in sentences:
             sentence = _without_chunk_refs(raw)
+            if _is_evidence_commentary(sentence):
+                accept_as_commentary(sentence.rstrip(".").strip(), tag_ids, cited)
+                continue
             if _is_lead_in(sentence) or len(_WORD_RE.findall(sentence)) < MIN_WORDS_PER_SENTENCE:
                 continue  # not a claim; counts neither for nor against
             total += 1

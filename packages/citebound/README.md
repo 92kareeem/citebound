@@ -275,15 +275,15 @@ verification tools publish either figure; the second one is the one that matters
 
 | Metric | Hand-written, 52 pairs | **Derived from RAGTruth, 134 pairs** |
 |---|---|---|
-| Pair accuracy | 60% (31 of 52) | **22% (30 of 134)** |
+| Pair accuracy | 60% (31 of 52) | **24% (32 of 134)** |
 | Wrong claims caught | 34 of 51 | 39 of 134 |
-| Right claims dropped | 5 of 53 | 23 of 134 |
+| Right claims dropped | 5 of 53 | 20 of 134 |
 
 The hand-written set mutates one operator or one unit at a time, so it says
 which specific failures the gate can see. The derived set is built from
 [RAGTruth](https://arxiv.org/abs/2401.00396)'s human-labelled hallucination
 spans: every sentence was written by a production model and judged by somebody
-other than us, so it says how much of the real problem that reaches. **Read 22%
+other than us, so it says how much of the real problem that reaches. **Read 24%
 as the share of real hallucinations a deterministic layer catches on its own,
 never as a detection rate.**
 

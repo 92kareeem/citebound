@@ -24,19 +24,19 @@ scores zero.
 
 ## Where `citebound` stands on it
 
-Source checkout, with the polarity and unit guards.
+Source checkout, with the polarity, unit and evidence-commentary guards.
 
 | Metric | Value |
 |---|---|
-| Pair accuracy | **22%** (30 of 134) |
+| Pair accuracy | **24%** (32 of 134) |
 | Hallucinated sentences caught | 39 of 134 (29%) |
-| Clean sentences wrongly dropped | 23 of 134 (17%) |
+| Clean sentences wrongly dropped | 20 of 134 (15%) |
 
 | Class | Pairs | Right | Caught | Wrongly dropped |
 |---|---:|---:|---:|---:|
 | `rt-evident-conflict` | 40 | 7 | 10 / 40 | 8 / 40 |
-| `rt-evident-baseless` | 40 | 15 | 17 / 40 | 5 / 40 |
-| `rt-subtle-baseless` | 40 | 7 | 11 / 40 | 7 / 40 |
+| `rt-evident-baseless` | 40 | 16 | 17 / 40 | 4 / 40 |
+| `rt-subtle-baseless` | 40 | 8 | 11 / 40 | 5 / 40 |
 | `rt-subtle-conflict` | 14 | 1 | 1 / 14 | 3 / 14 |
 
 This is much harder than the hand-written set, and the gap is the honest one.
@@ -49,25 +49,36 @@ layer reaches on its own.
 
 ## What the false refusals revealed
 
-Nine of the 23 are not grounding failures at all. They are sentences *about*
-the evidence rather than claims drawn from it:
+Of the original 23, three were not grounding failures at all: a blanket
+admission of no answer, and a bare pointer to citations with nothing asserted,
+which the gate used to treat as a claim needing support and strip:
 
-> According to passage 1, you can delete a row by right-clicking in a cell.
->
-> The passages do not provide detailed instructions on how to start a paw paw
-> tree from seed.
->
 > (Unable to answer based on given passages)
+>
+> Please note that the provided passages may not have all the necessary
+> information to answer the question completely.
 
-The gate treats each as a claim needing support and strips it. Two of them are
-the model correctly declining to answer, so stripping them is worse than
-useless. A sentence whose subject is the passages themselves is not a claim
-about the world, and the package already has the shape of this idea in its
-lead-in check. Extending it is the first fix this set has earned.
+Neither names anything specific the evidence lacks, so neither can be a false
+claim about coverage, and stripping them was worse than useless on the one
+that is a correct refusal. This is now fixed: see `_is_evidence_commentary` in
+`grounding.py`.
 
-The remaining fourteen are ordinary paraphrase: the same fact in different
-words, below the lexical overlap floor. Those need the optional semantic tier,
-not another rule.
+A broader version of this fix was tried first, also accepting a sentence that
+names a specific absent topic - "the passages do not provide detailed
+instructions on how to start a paw paw tree from seed" - on the reasoning that
+such a sentence, true or false, says nothing about passage content a lexical
+check could use. Measured against this set's own `-marked` half, that
+reasoning does not hold: four real labelled hallucinations use the identical
+wording to *falsely* deny that the evidence covers something it actually does,
+and topic-word overlap could not separate the honest cases from the false
+ones (both ranged 0.06-0.40 on their own content words). That broader version
+is documented in `grounding.py`'s history for the record, not shipped: a
+3-case fix with zero measured cost was kept over a wider one with four.
+
+The remaining twenty are the true shape of the problem: ordinary paraphrase,
+or a specific coverage claim that may or may not be true. Both need an actual
+judge or an entailment model to resolve; no rule over word surfaces reaches
+them without the same false-accept risk just measured.
 
 ## Limits, stated plainly
 

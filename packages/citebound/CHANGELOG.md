@@ -6,6 +6,37 @@ All notable changes to `citebound`. The format follows
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-22
+
+### Changed
+
+- A sentence that admits no answer is available, or merely points at its own
+  citations, is accepted outright instead of being checked for lexical
+  support it was never going to have: "(Unable to answer based on given
+  passages)" and "(Passages 1, 2, 3)" no longer get stripped, and a one-line
+  answer that is only such a sentence is now verified rather than refused
+  (previously `total == 0` for that answer, which refused it regardless of
+  how honest it was). A sentence naming a specific absent topic - "the
+  passages do not mention pricing" - is deliberately NOT included: measured
+  against RAGTruth's own labels, four real hallucinations used that exact
+  wording to falsely deny that the evidence covers something it actually
+  does, and lexical overlap could not separate the honest cases from the
+  false ones. See `_is_evidence_commentary` in `grounding.py` for the full
+  rationale, including the broader version tried first and rejected.
+- On the RAGTruth-derived benchmark (`benchmark/derived`): false refusals
+  23 -> 20 of 134, pair accuracy 30 -> 32 of 134 (22% -> 24%). Zero change in
+  false accepts; the reduction was measured against the derived set's own
+  `-marked` cases before shipping, not assumed. The hand-written benchmark is
+  unchanged (31/52 pairs, 17/51 false accepts, 5/53 false refusals): no case
+  in it exercises this sentence shape yet.
+
+### Added
+
+- `tests/test_evidence_commentary.py`: the four real RAGTruth sentences that
+  the broader, rejected version of this fix would have wrongly accepted are
+  permanent regression tests, run against their real passages, not a
+  paraphrase.
+
 ## [0.2.0] - 2026-11-22
 
 ### Changed

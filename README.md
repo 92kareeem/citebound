@@ -117,9 +117,9 @@ the one that matters, and it is the one most verification tools do not publish.
 
 | Metric | Hand-written, 52 pairs | **Derived from RAGTruth, 134 pairs** |
 |---|---|---|
-| **Pair accuracy** | 60% (31 of 52) | **22% (30 of 134)** |
+| **Pair accuracy** | 60% (31 of 52) | **24% (32 of 134)** |
 | Wrong claims caught | 34 of 51 | 39 of 134 |
-| Right claims dropped | 5 of 53 | 23 of 134 |
+| Right claims dropped | 5 of 53 | 20 of 134 |
 
 The hand-written set changes one operator or one unit at a time, so it says
 precisely which failures the gate can see. The derived set is built from
@@ -127,7 +127,7 @@ precisely which failures the gate can see. The derived set is built from
 spans — every sentence written by a production model and judged by somebody
 other than us — so it says how much of the real problem that reaches.
 
-**Read 22% as the share of real hallucinations a deterministic layer catches on
+**Read 24% as the share of real hallucinations a deterministic layer catches on
 its own. It is not a detection rate, and the gap between the two columns is the
 honest measure of this approach's limit.** A lexical gate sees a flipped
 operator and an invented figure. It does not see a paraphrase, or a fabrication
