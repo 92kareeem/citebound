@@ -62,3 +62,34 @@ def test_answer_can_come_from_stdin(
     )
     assert main(["check", "--passages", str(passages_file)]) == 0
     assert "VERIFIED" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("limit", ["nan", "inf", "-inf", "-0.1", "1.1"])
+def test_invalid_limit_is_a_usage_error(
+    limit: str,
+    passages_file: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    import io
+
+    monkeypatch.setattr("sys.stdin", io.StringIO("Refunds are available within 30 days [1]."))
+    with pytest.raises(SystemExit) as exc:
+        main(["check", "--passages", str(passages_file), "--numeric", f"--max-stripped={limit}"])
+    assert exc.value.code == 2
+    output = capsys.readouterr()
+    assert not output.out and "max_stripped_ratio" in output.err
+    assert "Traceback" not in output.err
+
+
+def test_no_surviving_claims_exit_one_at_the_most_permissive_limit(
+    passages_file: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    import io
+
+    monkeypatch.setattr("sys.stdin", io.StringIO("Refunds take 90 days [1]."))
+    code = main(["check", "--passages", str(passages_file), "--numeric", "--max-stripped=1"])
+    output = capsys.readouterr().out
+    assert code == 1 and output.startswith("NOT VERIFIED") and "limit 100%" in output

@@ -111,6 +111,12 @@ stripped, `ok` is `False`, `answer` is empty and `refusal` is
 closed. The model's own refusal token (`INSUFFICIENT_CONTEXT`) passes through
 as `is_refusal=True` with reason `INSUFFICIENT_EVIDENCE`.
 
+**Unreleased:** an answer with no surviving claims also refuses at
+`max_stripped_ratio=1`; raising the limit permits a smaller supported subset,
+never an empty successful answer. Both thresholds must be finite numbers in
+`[0, 1]`, and `citation_style` must be `"tag"` or `"numeric"`. Invalid options
+raise `ValueError` (CLI usage errors exit with status 2).
+
 Details that came from real failures, each with a test:
 
 - Numbers echoed from the **question** are not fabrications ("is 20 days inside

@@ -175,7 +175,7 @@ class Verdict:
     @property
     def passed(self) -> bool:
         """True when a verified answer exists. False for refusals of any kind."""
-        return self.ok and not self.is_refusal
+        return self.ok and not self.is_refusal and bool(self.answer.strip())
 
     def safe_text(self) -> str:
         """The verified answer, or refusal prose generated from the reason code.
@@ -391,7 +391,21 @@ def verify(
 
     ``citation_style="numeric"`` reads ``[1]``, ``[2, 3]`` as 1-based positions
     in ``passages`` and writes the verified answer back in that style.
+
+    Thresholds must be finite numbers in [0, 1]; invalid options raise
+    ``ValueError`` before verification. Even at ``max_stripped_ratio=1``,
+    at least one claim must survive for the answer to pass.
     """
+    if citation_style not in ("tag", "numeric"):
+        raise ValueError("citation_style must be 'tag' or 'numeric'")
+    for name, value in (
+        ("max_stripped_ratio", max_stripped_ratio),
+        ("min_lexical_overlap", min_lexical_overlap),
+    ):
+        # The bounded comparison rejects NaN/infinities as well as out-of-range
+        # values without coercing strings, booleans or other caller mistakes.
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not 0 <= value <= 1:
+            raise ValueError(f"{name} must be a finite number between 0 and 1")
     passages = _with_ids(passages)
     ids = [p.id for p in passages]
     opt = _Options(max_stripped_ratio, min_lexical_overlap, _numbers_in(question))
@@ -484,7 +498,7 @@ def verify(
     clean = ". ".join(kept) + ("." if kept else "")
     if citation_style == "numeric":
         clean = tags_to_numeric(clean, ids)
-    ok = ratio <= opt.max_stripped_ratio
+    ok = bool(kept) and ratio <= opt.max_stripped_ratio
     return Verdict(
         ok=ok,
         # A failed verdict carries no text at all. The surviving sentences are

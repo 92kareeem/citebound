@@ -32,6 +32,15 @@ All notable changes to `sentinel-proof`. The format follows
   refusals of 53. No behaviour changed in this entry; the numbers are the
   baseline the next release is measured against.
 
+### Fixed
+
+- An answer with no surviving claims now refuses even when
+  `max_stripped_ratio=1`. `Verdict.passed` also requires nonempty answer text.
+- Reject invalid citation styles and nonfinite/out-of-range thresholds with
+  `ValueError` at the core API boundary, including before refusal short-circuits.
+  CLI configuration errors exit with usage status 2; its human report shows
+  the configured stripping limit.
+
 ## [0.1.2] - 2026-11-16
 
 ### Added
