@@ -1,6 +1,6 @@
 [project]
 name = "citebound"
-version = "0.2.0"
+version = "0.2.1"
 description = "Bind every claim an LLM makes to the passage it cites. Deterministic, dependency-free verification for RAG and agent answers: every number and citation checked against the retrieved context, wrong citations repaired, unsupported sentences stripped, ungroundable answers refused. No model call, no API key."
 readme = "README.md"
 requires-python = ">=3.10"

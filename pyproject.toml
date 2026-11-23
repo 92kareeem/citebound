@@ -37,7 +37,7 @@ dependencies = [
     # The grounding gate, as the standalone Apache-2.0 package in
     # packages/citebound. Resolved from the workspace here; pip-based
     # installs (CI, Docker, `make install`) install that directory explicitly.
-    "citebound>=0.2.0",
+    "citebound>=0.2.1",
 ]
 
 [project.optional-dependencies]

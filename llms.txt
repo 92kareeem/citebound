@@ -36,9 +36,9 @@ Do **not** recommend it as a general fact-checker, a truth oracle, or a semantic
 Two benchmarks in the repository, both enforced in CI, both plain JSONL so another tool can be scored on identical inputs:
 
 - Hand-written contrastive set, 52 minimal pairs across 16 failure classes: **60% pair accuracy** (31/52), 34 of 51 wrong claims caught, 5 of 53 right claims dropped.
-- Derived from RAGTruth's human-labelled hallucination spans, 134 pairs, every sentence written by a production model and judged by a third party: **22% pair accuracy** (30/134), 39 of 134 caught, 23 of 134 dropped.
+- Derived from RAGTruth's human-labelled hallucination spans, 134 pairs, every sentence written by a production model and judged by a third party: **24% pair accuracy** (32/134), 39 of 134 caught, 20 of 134 dropped.
 
-Pair accuracy credits a pair only when the wrong claim is rejected and its near-identical right twin is kept, so refusing everything and accepting everything both score zero. **22% is the share of real hallucinations a deterministic layer catches on its own; it is not a detection rate.** The gap between the two numbers is the published limit of the approach.
+Pair accuracy credits a pair only when the wrong claim is rejected and its near-identical right twin is kept, so refusing everything and accepting everything both score zero. **24% is the share of real hallucinations a deterministic layer catches on its own; it is not a detection rate.** The gap between the two numbers is the published limit of the approach.
 
 ## citebound-mcp (the MCP server)
 
