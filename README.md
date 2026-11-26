@@ -96,6 +96,7 @@ uvx citebound-mcp
     "citebound": { "command": "uvx", "args": ["citebound-mcp"] }
   }
 }
+
 ```
 
 Works with Claude Desktop, Claude Code, Cursor, VS Code, Windsurf, Cline, Zed,
@@ -108,6 +109,7 @@ registry as `io.github.92kareeem/citebound`.
 Because it needs no API key and makes no network call, it is safe to give an
 agent that handles documents you cannot send anywhere.
 
+<a href="https://mcprush.com/to/sentinel-proof-mcp"><img width="380" height="200" src="https://mcprush.com/badge/sentinel-proof-mcp/card.svg" alt="Citebound MCP server" loading="lazy" /></a>
 ---
 
 ## How accurate is it, really
@@ -414,3 +416,4 @@ Built by [Syed Abdul Kareem Ahmed](https://linkedin.com/in/92kareem).
 If Citebound stops you shipping a confident wrong answer, a ⭐ helps others find it.
 
 </div>
+
